@@ -7,7 +7,10 @@ function [ kinect_times ] = match_squarewave_main( bdf, led_vals, times, kinect_
 %% Get information about Cerebus Squarewave
 
 analog_ts = bdf.analog.ts';
-KinectSyncPulse = bdf.analog.data;
+
+% find KinectSyncPulse signal
+pulse_idx = strcmp(bdf.analog.channel,'KinectSyncPulse');
+KinectSyncPulse = bdf.analog.data(:,pulse_idx);
 
 %Clean up the squarewave
 KinectSquare=KinectSyncPulse>2000;
