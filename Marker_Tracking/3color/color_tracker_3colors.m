@@ -21,28 +21,16 @@ num='002';
 fname_load=ls([main_dir monkey '/Color_Tracking/' date '/Tracking/color_tracking ' exp '_' num '*']);
 load(deblank(fname_load));
 
-% load(ls([main_dir monkey '/Color_Tracking/' date '/Tracking/color_tracking ' exp '_' num '*']))
 
-%% Marker location reminder figure
+%% User Options / Initializations
 
-marker_demo_locs=[0 0; 1 1; 1 -1; 2 1; 2 -1;...
-    10 -1; 10 3; 10 6; 10 9; 9 0;...
-    2 -3];
-r=[1 0 0];
-g=[0 1 0];
-b=[0 1 1];
-marker_demo_colors=[g; b; r; r; g; g; b; r; g; r; b];
+first_time=1; %If this is the first file from a date, set equal to 1 (there are more initializations)
 
-figure; scatter(marker_demo_locs(:,1),marker_demo_locs(:,2),200,marker_demo_colors,'filled');
-str={'1','2','3','4','5','6','7','8','9','10','11'};
-text(marker_demo_locs(:,1),marker_demo_locs(:,2),str)
-xlim([-5 15]);
-ylim([-5 15]);
+%Save the output?
+savefile=0;
 
-%% SET 0. Initializations
-
-
-first_time=0; %If this is the first file from a date, set equal to 1 (there are more initializations)
+%Use default values for parameters?
+use_defaults=0;
 
 %Load all of the settings if it's not the first file 
 if ~first_time
@@ -57,6 +45,16 @@ n=length(color1);
 finish=n; %Time point we're finishing at
 n_times=finish-start+1; %Number of time points (frames)
 
+n_times_prelim=n_times;
+
+%Plot figure of schematic of marker locations?
+plot_marker_locs=1;
+
+%Manually type in initial marker locations? (Otherwise you get to click on
+%them in the figure)
+marker_init_manual=0;
+
+
 %MARKER NUMBER INITIALIZATIONS
 red_arm_marker_ids=[8,10];
 blue_arm_marker_ids=[7];
@@ -66,24 +64,24 @@ red_hand_marker_ids=[3,4];
 blue_hand_marker_ids=[2]; %Sometimes just 2, sometimes 2 and 11
 green_hand_marker_ids=[1,5];
 
-%MARKER LOCATION INITIALIZATIONS
-marker_inits=NaN(11,3);
-marker_inits(1,:)=[.9,-.06,-.15];
-marker_inits(2,:)=[.9,-.04,-.15];
-marker_inits(3,:)=[.9,-.05,-.16];
-marker_inits(4,:)=[.9,-.03,-.14];
-marker_inits(5,:)=[.9,-.02,-.16];
-marker_inits(6,:)=[1,.17,-.16];
-marker_inits(7,:)=[1,.16,-.11];
-marker_inits(8,:)=[1,.15,-.06];
-marker_inits(9,:)=[1,.15,0.0];
-marker_inits(10,:)=[1,.15,-.15];
+%% Plotting Initializations (Also user input)
 
-%I plot z,x,y (instead of x,y,z), so I input z,x,y above. Here, switch to x,y,z
-marker_inits_temp=marker_inits;
-marker_inits(:,1)=marker_inits_temp(:,2);
-marker_inits(:,2)=marker_inits_temp(:,3);
-marker_inits(:,3)=marker_inits_temp(:,1);
+plot_during=0; %If you'll be displaying the marker tracking while it's running at any point (only used during testing)
+
+%The x and y limits matter for selecting the markers in the initial frame.
+%The z limit will only matter if plot_during=1
+xlims=[-.5 .5];
+ylims=[-.5 .5];
+zlims=[0.5 1.5];
+
+pause_time=.03;
+
+if plot_during
+    figure;
+    set(gca,'NextPlot','replacechildren');
+end
+
+%% Initializations of vectors/matrices
 
 %Keeps track of all the cluster locations
 all_medians=NaN(11,3,n_times); %Has NaNs when a marker is missing
@@ -91,22 +89,137 @@ all_medians2=NaN(11,3,n_times); %Estimates where markers are when they are missi
 
 %Initialize some vectors that I use later for calculating the distance
 %between points
-dists=NaN(1,n_times);
-dists1=NaN(1,n_times);
-dists2=NaN(1,n_times);
-dists3=NaN(1,n_times);
-dists4=NaN(1,n_times);
-dists5=NaN(1,n_times);
+dists=NaN(1,n_times_prelim);
+dists1=NaN(1,n_times_prelim);
+dists2=NaN(1,n_times_prelim);
+dists3=NaN(1,n_times_prelim);
+dists4=NaN(1,n_times_prelim);
+dists5=NaN(1,n_times_prelim);
 
-%% Plotting Initializations
+%% 2. SELECT THE INITIAL MARKER LOCATIONS IN THE "START" FRAME
 
-figure;
-set(gca,'NextPlot','replacechildren');
-xlims=[-.5 .5];
-ylims=[-.5 .5];
-zlims=[0.5 1.5];
 
-pause_time=.03;
+%% Marker location schematic figure
+
+marker_demo_locs=[0 0; 1 1; 1 -1; 2 1; 2 -1;...
+    10 -1; 10 3; 10 6; 10 9; 9 0;...
+    2 -3];
+r=[1 0 0];
+g=[0 1 0];
+b=[0 1 1];
+marker_demo_colors=[g; b; r; r; g; g; b; r; g; r; b];
+
+if plot_marker_locs
+    figure('units','normalized','outerposition',[0 0 1 1])
+    subplot(1,2,1);
+    scatter(marker_demo_locs(:,1),marker_demo_locs(:,2),200,marker_demo_colors,'filled');
+    str={'1','2','3','4','5','6','7','8','9','10','11'};
+    text(marker_demo_locs(:,1),marker_demo_locs(:,2),str)
+    xlim([-5 15]);
+    ylim([-5 15]);
+end
+
+%% Marker location initializations (interactive)
+
+%We here set the locations of the markers in the "start" rame
+
+if ~marker_init_manual
+    
+    marker_colors={'g','b','r','r','g','g','b','r','g','r'}; %The colors of each of our markers
+    
+    num_markers=10;
+    marker_coords_xy=NaN(num_markers,2);
+    
+    if plot_marker_locs
+        subplot(1,2,2);
+    else
+        figure
+    end
+    %Get x,y,z coordinates for points in all colors
+    temp=color1{start};
+    x1=temp(1:end/3);
+    y1=temp(end/3+1:2*end/3);
+    z1=temp(2*end/3+1:end);
+    hold on;
+    temp=color2{start};
+    x2=temp(1:end/3);
+    y2=temp(end/3+1:2*end/3);
+    z2=temp(2*end/3+1:end);
+    temp=color3{start};
+    x3=temp(1:end/3);
+    y3=temp(end/3+1:2*end/3);
+    z3=temp(2*end/3+1:end);
+    
+    %Remove red cord in background
+    keep=z3<2;   
+    x3_keep=x3(keep);
+    y3_keep=y3(keep);
+    z3_keep=z3(keep);
+    
+    %Plot all the points in the x/y plane (z, which is depth, doesn't change
+    %much between the points)
+    scatter(x1,y1,'b')
+    hold on;
+    scatter(x2,y2,'g')
+    scatter(x3_keep,y3_keep,'r')
+    hold off
+    xlabel('x')
+    ylabel('y')
+    xlim(xlims)
+    ylim(ylims)
+    
+    %Have users select the markers
+    for m=1:num_markers
+        title(['Click marker ' num2str(m)])
+        marker_coords_xy(m,:)=ginput(1);
+    end
+    
+    %Get the 3d marker locations. To do so, we find the point (of the appropriate color) with the
+    %closest x/y coordinate. We then get the x/y/z coordinates of that point.
+    marker_inits=NaN(11,3); %Made large enough for an 11th marker (which we used at one point)
+    for m=1:num_markers
+        if marker_colors{1}=='r'
+            closest_point=knnsearch([x3_keep' y3_keep'],marker_coords_xy(m,:),'k',1);
+            marker_inits(m,:)=[x3_keep(closest_point) y3_keep(closest_point) z3_keep(closest_point)];
+        end
+        if marker_colors{1}=='g'
+            closest_point=knnsearch([x2' y2'],marker_coords_xy(m,:),'k',1);
+            marker_inits(m,:)=[x2(closest_point) y2(closest_point) z2(closest_point)];
+        end
+        if marker_colors{1}=='b'
+            closest_point=knnsearch([x1' y1'],marker_coords_xy(m,:),'k',1);
+            marker_inits(m,:)=[x1(closest_point) y1(closest_point) z1(closest_point)];
+        end
+    end
+    
+end
+
+%% Marker location initializations (if you'd prefer to type it in)
+
+%If you'd prefer to type in the initial marker locations ahead of time, you
+%can do it here. You can get them from orioginal_colos_plot_4colors
+
+if marker_init_manual
+    marker_inits=NaN(11,3);
+    marker_inits(1,:)=[.9,-.06,-.15];
+    marker_inits(2,:)=[.9,-.04,-.15];
+    marker_inits(3,:)=[.9,-.05,-.16];
+    marker_inits(4,:)=[.9,-.03,-.14];
+    marker_inits(5,:)=[.9,-.02,-.16];
+    marker_inits(6,:)=[1,.17,-.16];
+    marker_inits(7,:)=[1,.16,-.11];
+    marker_inits(8,:)=[1,.15,-.06];
+    marker_inits(9,:)=[1,.15,0.0];
+    marker_inits(10,:)=[1,.15,-.15];
+    
+    %I plot z,x,y (instead of x,y,z), so I input z,x,y above. Here, switch to x,y,z
+    marker_inits_temp=marker_inits;
+    marker_inits(:,1)=marker_inits_temp(:,2);
+    marker_inits(:,2)=marker_inits_temp(:,3);
+    marker_inits(:,3)=marker_inits_temp(:,1);
+end
+
+%% 3. TRACK ARM MARKERS (GET THE LOCATION OF ARM MARKERS)
 
 %% Blue Arm
 
@@ -166,7 +279,7 @@ end
 all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
-%% Red Arm
+%% Red Arm (Preliminary)
 
 if first_time %If this is not the first file from a date, we don't need to run this.
     
@@ -234,37 +347,73 @@ if first_time %If this is not the first file from a date, we don't need to run t
     all_medians2(marker_ids,:,:)=medians2;
     
 end
-%% Plot Red elbow to Blue Arm Distance
 
+%% Set limits on red arm to blue arm distances
+
+%PLOT RED ARM TO BLUE ARM DISTANCES
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Calculate distances for each time point
-    for i=1:n_times
+    for i=1:n_times_prelim
         dists(i)=pdist2(all_medians(10,:,i),all_medians(7,:,i)); %Distance between markers 7 and 10 (blue arm and red elbow)
-        dists2(i)=pdist2(all_medians(8,:,i),all_medians(7,:,i)); %Distance between markers 7 and 9 (blue arm and red arm)
+        dists2(i)=pdist2(all_medians(8,:,i),all_medians(7,:,i)); %Distance between markers 7 and 8 (blue arm and red arm)
     end
     
-    %Plot
-    figure; plot(dists); 
-    hold on;
-    plot(dists2)
-    legend('7-10','7-9')
-end
-%% SET 1: Red Elbow/Arm to Blue Arm Distance
-
-if first_time
-    
-    str1='1A. Input red_elbow_dist_from_blue \n';
-    str2='The blue values in the above plot should be below this value (the red elbow should always be within this distance of the blue arm)\n';
-    str3='Value is generally ~ .05 \n';    
-    red_elbow_dist_from_blue=input([str1 str2 str3]);
-    
-    str1='1B. Input red_blue_arm_dist_max \n';
-    str2='%All values in above plot should be below this value (Maximum distance from a red arm point to the blue)\n';
-    str3='Value is generally ~ .08 \n';   
-    red_blue_arm_dist_max=input([str1 str2 str3]);
+    if use_defaults %User defaults
+        red_elbow_dist_from_blue=nanmean(dists)+4*nanstd(dists);
+        red_blue_arm_dist_max=nanmean(dists2)+4*nanstd(dists2);
         
+    else %If not using defaults
+        
+        %Plot
+        figure; plot(dists);
+        hold on;
+        plot(dists2)
+        legend('7-10','7-8')
+        title('Distance between blue arm marker (7) and red arm markers (8 and 10)');
+        
+        %VISUALIZE FRAMES
+        user_input=1; %A value so that it enters the while loop below
+        while ~isempty(user_input)
+            str1='Next, you will set maximum values of distances between the blue and red arm markers \n';
+            str2='First, to help make this decision, enter time point you want to visualize (or just press enter to continue) \n';
+            user_input=input([str1 str2]);
+            %Make sure the input was valid (an integer between start and finish)
+            if ~isempty(user_input)
+                while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
+                    user_input=input('Re-enter valid time point \n');
+                end
+            end
+            if ~isempty(user_input)
+                plot_together_3colors_func(user_input, [7 8 10], [1:10], all_medians, color1, color2, color3,  start, finish, 1)
+            end
+        end
+        
+        % SET RED ARM TO BLUE ARM DISTANCES
+        str1='Input red_elbow_dist_from_blue \n';
+        str2='The blue values in the above plot should be generally be below this value (the red elbow should be within this distance of the blue arm)\n';
+        str3='The purpose of this is to keep all points w/in this distance of the blue as marker candidates (useful if the red elbow marker was gone the previous frame) \n';
+        str4='Value is generally ~ .05-.1 \n';
+        red_elbow_dist_from_blue=input([str1 str2 str3 str4]);
+        %Make sure it's a valid entry
+        while ~(isnumeric(red_elbow_dist_from_blue))
+            red_elbow_dist_from_blue=input('Re-enter valid value');
+        end
+        
+        
+        str1='Input red_blue_arm_dist_max \n';
+        str2='All values in above plot should be below this value (Maximum distance from a red arm point to the blue)\n';
+        str3='The purpose of this is to remove all points farther than this from the blue marker (to get rid of noise)\n';
+        str4='Value is generally ~ .05-.1 \n';
+        red_blue_arm_dist_max=input([str1 str2 str3 str4]);
+        %Make sure it's a valid entry
+        while ~(isnumeric(red_blue_arm_dist_max))
+            red_blue_arm_dist_max=input('Re-enter valid value');
+        end
+        
+    end
 end
+
 
 %% Red Arm (Redo)
 %Note that this is different from the previous version of "Red Arm" because
@@ -278,7 +427,7 @@ prev_meds=marker_inits(marker_ids,:);
 num_clust=length(marker_ids); %Number of clusters
 within_clust_dist1=.07; %How close points must be to the previous frame's first marker, # marker_ids(1), to be considered
 within_clust_dist2=.07; %How close points must be to the previous frame's second marker, # marker_ids(2), to be considered   
-dist_min=0.07; %Minimum distance between markers (cluster medians aren't allowed w/ distance < min_dist)
+dist_min=0.06; %Minimum distance between markers (cluster medians aren't allowed w/ distance < min_dist)
 
 medians=NaN(num_clust,3,n_times); %Has NaNs when a marker is missing
 medians2=NaN(num_clust,3,n_times); %Has previous known positions when a marker is missing
@@ -336,6 +485,71 @@ end
 
 all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
+
+%% Remove faulty red elbow points
+
+%This calculates (and plots) the angle made by points 7,8,10
+%Problems with the red elbow marker (point 10) will make this angle wrong
+%We will remove those points
+
+angle=NaN(1,n_times); %Initialize vector of angles for each frame
+
+for i=1:n_times
+    
+    if all(~isnan(all_medians([7 8 10],1,i))) %Only find angle for frames when all markers 7/8/10 are present
+        a=all_medians(10,:,i);
+        b=all_medians(7,:,i);
+        c=all_medians2(8,:,i);
+        
+        u=a-b; %Vector from 10 to 7
+        v=c-b; %Vector from 8 to 7
+        
+        angle(i)=acos(dot(u,v)/norm(u)/norm(v)); %Angle made by 10,7,8
+    end
+end
+
+%Plot
+figure; plot(angle)
+red_elbow_angle_thresh=nanmean(angle)-4*nanstd(angle); %Frames with an angle below this will have marker 10 removed (default threshold)
+title(['Red Elbow Angles: Default Threshold=' num2str(red_elbow_angle_thresh)]);
+
+
+if ~use_defaults %Default was set above: nanmean(angle)-4*nanstd(angle). If you're not using the default:
+    
+    %VISUALIZE FRAMES
+    user_input=1; %A value so that it enters the while loop below
+    while ~isempty(user_input)
+        str1='Next, you will enter a minimum threshold for the red elbow angle \n';
+        str2='First, to decide how to set this threshold, you can enter a time point you want to visualize (or just press enter to continue) \n';
+        user_input=input([str1 str2]);
+        %Make sure the input was valid (an integer between start and finish)
+        if ~isempty(user_input)
+            while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
+                user_input=input('Re-enter valid time point \n');
+            end
+        end
+        if ~isempty(user_input)
+            plot_together_3colors_func(user_input, [7 8 10], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+        end
+    end
+    
+    %SET ANGLE THRESHOLD FOR RED ELBOW REMOVAL
+    str1='Enter angle threshold for red elbow removal. Press enter for default. \n';
+    temp=input(str1);
+    %Make sure it's a valid entry
+    while ~(isnumeric(temp) || isempty(temp))
+        temp=input('Re-enter valid value');
+    end
+    
+    if ~isempty(temp)
+        red_elbow_angle_thresh=temp;
+    end
+    
+end
+
+%Remove red elbow points (based on angle)
+rmv10=angle<red_elbow_angle_thresh;
+all_medians(10,:,rmv10)=NaN;
 
 %% Green Shoulder
 
@@ -395,115 +609,6 @@ if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a gree
     all_medians2(marker_ids,:,:)=medians2;
 end
 
-%% REMOVE RED ARM POINTS
-
-%% Plot distances from red arm points to blue arm (and each other)
-
-for i=1:n_times
-    dists(i)=pdist2(all_medians(10,:,i),all_medians(7,:,i)); %Distance between markers 7 and 10 (blue arm and red elbow)
-    dists2(i)=pdist2(all_medians(10,:,i),all_medians(8,:,i)); %Distance between markers 8 and 10 (red arm and red elbow)
-    dists3(i)=pdist2(all_medians(8,:,i),all_medians(7,:,i)); %Distance between markers 7 and 8 (blue arm and red arm)
-end
-
-
-if first_time %If this is not the first file from a date, we don't need to plot this.
-    
-    figure; plot(dists); 
-    hold on;
-    plot(dists2)
-    plot(dists3)
-    legend('7-10','8-10','7-8')
-    
-end
-%% SET 2. red arm points to remove (based on distance from blue arm point)
-
-if first_time
-    
-    str1='2a. Input red_arm_thresh1 \n';
-    str2='Blue should be below this in above plot\n';
-    str3='Value is generally ~ .05 \n';    
-    red_arm_thresh1=input([str1 str2 str3]);
-    
-    str1='2b. Input red_arm_thresh2 \n';
-    str2='Yellow should be above this in above plot\n';
-    str3='Value is generally ~ .05 \n';    
-    red_arm_thresh2=input([str1 str2 str3]);
-    
-
-end
-
-%% Remove some red arm points 
-%Could also try to switch?
-
-if exist('red_arm_thresh','var') %for some files I converted early on
-    red_arm_thresh1=red_arm_thresh;
-    red_arm_thresh2=red_arm_thresh;
-end
-
-%Remove marker 10
-rmv10=dists>red_arm_thresh1;
-all_medians(10,:,rmv10)=NaN;
-
-%Remove marker 8
-rmv8=dists3<red_arm_thresh2;
-all_medians(8,:,rmv8)=NaN;
-
-
-%% Plot distances from red arm points to green shoulder
-
-% for i=1:n_times
-%     dists(i)=pdist2(all_medians(10,:,i),all_medians(9,:,i)); %Distance between markers 7 and 10 (blue arm and red elbow)
-% %     dists2(i)=pdist2(all_medians(10,:,i),all_medians(8,:,i)); %Distance between markers 8 and 10 (red arm and red elbow)
-%     dists3(i)=pdist2(all_medians(8,:,i),all_medians(9,:,i)); %Distance between markers 7 and 8 (blue arm and red arm)
-% end
-% 
-% 
-% if first_time %If this is not the first file from a date, we don't need to plot this.
-%     
-%     figure; plot(dists); 
-%     hold on;
-% %     plot(dists2)
-%     plot(dists3)
-%     legend('9-10','9-8')
-%     
-% end
-
-%% Plot red elbow angle relative to arm (based on angle)
-
-%This calculates (and plots) the angle made by points 7,8,10
-%Problems with the red elbow marker (point 10) will make this angle wrong
-
-%Note- look back at version 10 for code that has to do with distance from
-%the line, instead of the angle
-
-angle=NaN(1,n_times); %Initialize vector of angles for each frame
-
-for i=1:n_times
-    
-    if all(~isnan(all_medians([7 8 10],1,i))) %Only find angle for frames when all markers 7/8/10 are present
-        a=all_medians(10,:,i);
-        b=all_medians(7,:,i);
-        c=all_medians2(8,:,i);
-        
-        u=a-b; %Vector from 10 to 7
-        v=c-b; %Vector from 8 to 7
-        
-        angle(i)=acos(dot(u,v)/norm(u)/norm(v)); %Angle made by 10,7,8
-    end
-end
-
-%Plot
-if first_time   
-    figure; plot(angle)   
-end
-%% SET 3. red elbow points to remove (based on angle)
-
-% red_elbow_angle_thresh=2.55;
-red_elbow_angle_thresh=nanmean(angle)-4*nanstd(angle); %Frames with an angle below this will have marker 10 removed
-%% Remove red elbow points (based on angle)
-
-rmv10=angle<red_elbow_angle_thresh;
-all_medians(10,:,rmv10)=NaN;
 
 %% Green Elbow
 
@@ -569,14 +674,11 @@ end
 all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
-%% Plot green elbow angle relative to arm (based on angle)
+%% Remove faulty green elbow points
 
 %This calculates (and plots) the angle made by points 7,8,6
 %Problems with the green elbow marker (point 6) will make this angle wrong
-
-%Note- look back at version 10 for code that has to do with distance from
-%the line, instead of the angle
-
+%We will remove those points
 
 angle=NaN(1,n_times); %Initialize vector of angles for each frame
 
@@ -596,23 +698,48 @@ for i=1:n_times
 end
 
 %Plot
-if first_time   
-    figure; plot(angle)   
+figure; plot(angle)
+green_elbow_angle_thresh=nanmean(angle)-4*nanstd(angle); %Frames with an angle below this will have marker 6 removed
+title(['Green Elbow Angles: Default Threshold=' num2str(green_elbow_angle_thresh)]);
+
+if ~use_defaults %Default was set above: nanmean(angle)-4*nanstd(angle). If you're not using the default:
+    
+    %VISUALIZE FRAMES
+    user_input=1; %A value so that it enters the while loop below
+    while ~isempty(user_input)
+        str1='Next, you will enter a minimum threshold for the green elbow angle \n';
+        str2='First, to decide how to set this threshold, you can enter a time point you want to visualize (or just press enter to continue) \n';
+        user_input=input([str1 str2]);
+        %Make sure the input was valid (an integer between start and finish)
+        if ~isempty(user_input)
+            while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
+                user_input=input('Re-enter valid time point \n');
+            end
+        end
+        if ~isempty(user_input)
+            plot_together_3colors_func(user_input, [6 7 8], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+        end
+    end
+    
+    % SET ANGLE THRESHOLD FOR GREEN ELBOW REMOVAL
+    str1='Enter angle threshold for green elbow removal. Press enter for default. \n';
+    temp=input(str1);
+    while ~(isnumeric(temp) || isempty(temp))
+        temp=input('Re-enter valid value');
+    end
+    if ~isempty(temp)
+        green_elbow_angle_thresh=temp;
+    end
+    
 end
-%% SET 4. green elbow points to remove (based on angle)
 
-% green_elbow_angle_thresh=2.55;
-green_elbow_angle_thresh=nanmean(angle)-3*nanstd(angle); %Frames with an angle below this will have marker 6 removed
-%% Remove green elbow points
-
+% Remove green elbow points (based on angle)
 rmv6=angle<green_elbow_angle_thresh;
 all_medians(6,:,rmv6)=NaN;
 
-%Note that in version 10 and previous, there were other attempted methods
-%for removing green elbow problems (based on distance to the other arm
-%points)
+%% 4. PRELIMINARY TRACKING OF HAND MARKERS (IN ORDER TO SET DISTANCE CONSTRAINTS TO ARM MARKERS)
 
-%% Red Hand
+%% Red Hand (Preliminary)
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -679,7 +806,8 @@ if first_time %If this is not the first file from a date, we don't need to run t
     all_medians2(marker_ids,:,:)=medians2;
     
 end
-%% Green Hand
+
+%% Green Hand (Preliminary)
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -745,7 +873,8 @@ if first_time %If this is not the first file from a date, we don't need to run t
     all_medians2(marker_ids,:,:)=medians2;
     
 end
-%% Blue Hand
+
+%% Blue Hand (Preliminary)
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -807,14 +936,20 @@ if first_time %If this is not the first file from a date, we don't need to run t
     all_medians(marker_ids,:,:)=medians;
     all_medians2(marker_ids,:,:)=medians2;
 end
-%% Plot hand distances from red elbow
+
+
+%% 5. SET DISTANCE CONSTRAINTS OF HAND MARKERS TO ARM MARKERS
+
+%% Set distance limits of hand markers to red elbow marker (after plotting the distances first)
+
+%PLOT
 %Plots the distances of every hand marker to to red elbow marker in order
 %to determine what distances are allowed (for rerunning the hand marker
 %tracking)
 if first_time
     
     %Calculate distances
-    for i=1:n_times
+    for i=1:n_times_prelim
         dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i)); %Distance from point 10 (red elbow to point 1)
         dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i)); %etc...
         dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
@@ -828,42 +963,108 @@ if first_time
     plot(dists3,'r');
     plot(dists4,'r');
     plot(dists5,'g');
+    title('Distance between red elbow marker (10) and hand markers');
+    legend('10-1','10-2','10-3','10-4','10-5');
+    
+    
+    if use_defaults %If you use the defaults
+        
+        str1='Enter vector of times to calculate default distances (e.g. 1:20000) \n';
+        str2='Or just press enter to use all times \n';
+        times_inc=input([str1 str2]);
+        if isempty(times_inc)
+            times_inc=1:n_times_prelim;
+        end 
+        
+        %Get the distances at the times you include
+        dists1=dists1(times_inc);
+        dists2=dists2(times_inc);
+        dists3=dists2(times_inc);
+        dists4=dists2(times_inc);
+        dists5=dists2(times_inc);
+        
+        green_hand_dists_elbow=[nanmean(dists5)-5*nanstd(dists5) nanmean(dists1)+5*nanstd(dists1)];
+        red_hand_dists_elbow=[nanmean(dists3)-5*nanstd(dists3) nanmean(dists3)+5*nanstd(dists3)];
+        blue_hand_dists_elbow=[nanmean(dists2)-5*nanstd(dists2) nanmean(dists2)+5*nanstd(dists2)];
+        green_separator=(nanmean(dists5)+nanmean(dists1))/2; 
+        
+    else %If you don't use the defaults
+        
+  
+        %Visualize Frames
+        user_input=1; %A value so that it enters the while loop below
+        while ~isempty(user_input)
+            str1='Below you will enter limits for the distances between the red elbow marker and hand markers \n';
+            str2='First, to help set these limits, you can enter a time point you want to visualize (or just press enter to continue) \n';
+            user_input=input([str1 str2]);
+            %Make sure the input was valid (an integer between start and finish)
+            if ~isempty(user_input)
+                while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
+                    user_input=input('Re-enter valid time point \n');
+                end
+            end
+            if ~isempty(user_input)
+                plot_together_3colors_func(user_input, [1:5], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+            end
+        end
+        
+        
+        
+        % Enter hand distance limits from red elbow
+        
+        str1='Input green_hand_dists_elbow \n';
+        str2='Lower and upper limits of distances of the green hand markers to the red elbow marker\n';
+        str3='Value is generally ~ [.15,.26] (around 2 or 3 cm from most points) \n';
+        green_hand_dists_elbow=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(green_hand_dists_elbow)==2)
+            green_hand_dists_elbow=input('Re-enter valid values');
+        end
+        
+        str1='Input red_hand_dists_elbow \n';
+        str2='Lower and upper limits of distances of the red hand markers to the red elbow marker\n';
+        str3='Value is generally ~ [.17,.23] (around 2 or 3 cm from most points) \n';
+        red_hand_dists_elbow=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(red_hand_dists_elbow)==2)
+            red_hand_dists_elbow=input('Re-enter valid values');
+        end
+        
+        str1='Input blue_hand_dists_elbow \n';
+        str2='Lower and upper limits of distances of the blue hand markers to the red elbow marker\n';
+        str3='Value is generally ~ [.17,.23] (around 2 or 3 cm from most points) \n';
+        blue_hand_dists_elbow=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(blue_hand_dists_elbow)==2)
+            blue_hand_dists_elbow=input('Re-enter valid values');
+        end
+        
+        str1='Input green_separator \n';
+        str2='Distance that separates the green hand points (marker 1 and 5) \n';
+        str3='Value is generally ~ .2\n';
+        green_separator=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(isnumeric(green_separator))
+            green_separator=input('Re-enter valid values');
+        end
+        
+    end
     
 end
-%% SET 5. hand distance limits from red elbow
 
-if first_time
-    
-    str1='5A. Input green_hand_dists_elbow \n';
-    str2='Lower and upper limits of distances of the green hand markers to the red elbow marker\n';
-    str3='Value is generally ~ [.17,.26] \n';    
-    green_hand_dists_elbow=input([str1 str2 str3]);
-    
-    str1='5B. Input red_hand_dists_elbow \n';
-    str2='Lower and upper limits of distances of the red hand markers to the red elbow marker\n';
-    str3='Value is generally ~ [.17,.24] \n';    
-    red_hand_dists_elbow=input([str1 str2 str3]);
-    
-    str1='5C. Input blue_hand_dists_elbow \n';
-    str2='Lower and upper limits of distances of the blue hand markers to the red elbow marker\n';
-    str3='Value is generally ~ [.19,.23] \n';    
-    blue_hand_dists_elbow=input([str1 str2 str3]);
-    
-    str1='5D. Input green_separator \n';
-    str2='Distance that separates the green hand points\n';
-    str3='Value is generally ~ .21 \n';    
-    green_separator=input([str1 str2 str3]);
-    
-end
-%% Plot hand distances from blue arm
+%% Set distance limits of hand markers to blue arm marker (after plotting the distances first)
+
+%PLOT
 %Plots the distances of every hand marker to to blue arm marker in order
 %to determine what distances are allowed (for rerunning the hand marker
 %tracking)
 
+%Note that using the distance from the hand to the blue arm marker only is helpful for a task with holding the handle
+
 if first_time
     
     %Calculate distances
-    for i=1:n_times
+    for i=1:n_times_prelim
         dists1(i)=pdist2(all_medians(7,:,i),all_medians(1,:,i)); %Distance from point 7 (blue arm) to point 1
         dists2(i)=pdist2(all_medians(7,:,i),all_medians(2,:,i));
         dists3(i)=pdist2(all_medians(7,:,i),all_medians(3,:,i));
@@ -871,118 +1072,260 @@ if first_time
         dists5(i)=pdist2(all_medians(7,:,i),all_medians(5,:,i));
     end
     
-    %Plot
-    figure; %Blue
-    plot(dists2,'b-x');
-    figure; %Red
-    plot(dists3,'r-x');
-    hold on;
-    plot(dists4,'m-x');
-    figure; %Green
-    plot(dists1,'g-x');
-    hold on;
-    plot(dists5,'c-x');
     
+    if use_defaults %If you use the defaults
+        
+        %Get the distances at the times you include (specified when setting
+        %distances to red elbow marker)
+        dists1=dists1(times_inc);
+        dists2=dists2(times_inc);
+        dists3=dists2(times_inc);
+        dists4=dists2(times_inc);
+        dists5=dists2(times_inc);
+        
+        green_hand_dists_bluearm=[nanmean(dists5)-6*nanstd(dists5) nanmean(dists1)+6*nanstd(dists1)];
+        red_hand_dists_bluearm=[nanmean(dists3)-6*nanstd(dists3) nanmean(dists3)+6*nanstd(dists3)];
+        blue_hand_dists_bluearm=[nanmean(dists2)-6*nanstd(dists2) nanmean(dists2)+6*nanstd(dists2)];
+        
+    else %If you don't use the defaults
+        
+        
+        %Plot
+        figure; %Blue
+        plot(dists2,'b-x');
+        title('Distance from blue arm marker to blue hand marker');
+        figure; %Red
+        plot(dists3,'r-x');
+        hold on;
+        plot(dists4,'m-x');
+        title('Distance from blue arm marker to red hand marker');
+        legend('Dist to pt3', 'Dist to pt4')
+        figure; %Green
+        plot(dists1,'g-x');
+        hold on;
+        plot(dists5,'c-x');
+        title('Distance from blue arm marker to green hand markers');
+        legend('Dist to pt1','Dist to pt5');
+        
+        
+        
+        % Enter hand distance limits from blue arm
+        
+        str1='Input green_hand_dists_bluearm \n';
+        str2='Lower and upper limits of distances of the green hand markers (green and cyan above) to the blue arm marker\n';
+        str3='Value is generally ~ [.15,.30] (around 4 cm from most points) \n';
+        green_hand_dists_bluearm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(green_hand_dists_bluearm)==2)
+            green_hand_dists_bluearm=input('Re-enter valid values');
+        end
+        
+        str1='Input red_hand_dists_bluearm \n';
+        str2='Lower and upper limits of distances of the red hand markers (red above) to the blue arm marker\n';
+        str3='Value is generally ~ [.16,.28] (around 4 cm from most points) \n';
+        red_hand_dists_bluearm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(red_hand_dists_bluearm)==2)
+            red_hand_dists_bluearm=input('Re-enter valid values');
+        end
+        
+        str1='Input blue_hand_dists_bluearm \n';
+        str2='Lower and upper limits of distances of the blue hand markers (blue above) to the blue arm marker\n';
+        str3='Value is generally ~ [.16,.28] (around 4 cm from most points) \n';
+        blue_hand_dists_bluearm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(blue_hand_dists_bluearm)==2)
+            blue_hand_dists_bluearm=input('Re-enter valid values');
+        end
+        
+    end
 end
-%% SET 6. hand distance limits from blue arm
 
-if first_time
-    
-    str1='6A. Input green_hand_dists_bluearm \n';
-    str2='Lower and upper limits of distances of the green hand markers (green and cyan above) to the blue arm marker\n';
-    str3='Value is generally ~ [.16,.29] \n';    
-    green_hand_dists_bluearm=input([str1 str2 str3]);
-    
-    str1='6B. Input red_hand_dists_bluearm \n';
-    str2='Lower and upper limits of distances of the red hand markers (red and magenta above) to the blue arm marker\n';
-    str3='Value is generally ~ [.16,.28] \n';    
-    red_hand_dists_bluearm=input([str1 str2 str3]);
-    
-    str1='6C. Input blue_hand_dists_bluearm \n';
-    str2='Lower and upper limits of distances of the blue hand markers (blue above) to the blue arm marker\n';
-    str3='Value is generally ~ [.18,.28] \n';    
-    blue_hand_dists_bluearm=input([str1 str2 str3]);
-    
-end
-%% Plot hand distances from red arm
+%% Set distance limits of hand markers to red arm marker (after plotting the distances first)
+
 %Plots the distances of every hand marker to to red arm marker in order
 %to determine what distances are allowed (for rerunning the hand marker
 %tracking)
 
+%Note that using the distance from the hand to the red arm marker only is helpful for a task with holding the handle
+
+
 if first_time
     %Calculate distances
-    for i=1:n_times
+    for i=1:n_times_prelim
         dists1(i)=pdist2(all_medians(8,:,i),all_medians(1,:,i)); %Distance from point 8 (red arm to point 1)
         dists2(i)=pdist2(all_medians(8,:,i),all_medians(2,:,i));
         dists3(i)=pdist2(all_medians(8,:,i),all_medians(3,:,i));
         dists4(i)=pdist2(all_medians(8,:,i),all_medians(4,:,i));
         dists5(i)=pdist2(all_medians(8,:,i),all_medians(5,:,i));
     end
-    %Plot
-    figure; %Blue
-    plot(dists2,'b-x');
-    figure; %Red
-    plot(dists3,'r-x');
-    hold on;
-    plot(dists4,'m-x');
-    figure; %Green
-    plot(dists1,'g-x');
-    hold on;
-    plot(dists5,'c-x');
     
+    
+    if use_defaults %If you use the defaults
+        
+        %Get the distances at the times you include (specified when setting
+        %distances to red elbow marker)
+        dists1=dists1(times_inc);
+        dists2=dists2(times_inc);
+        dists3=dists2(times_inc);
+        dists4=dists2(times_inc);
+        dists5=dists2(times_inc);
+        
+        green_hand_dists_redarm=[nanmean(dists5)-6*nanstd(dists5) nanmean(dists1)+6*nanstd(dists1)];
+        red_hand_dists_redarm=[nanmean(dists3)-6*nanstd(dists3) nanmean(dists3)+6*nanstd(dists3)];
+        blue_hand_dists_redarm=[nanmean(dists2)-6*nanstd(dists2) nanmean(dists2)+6*nanstd(dists2)];
+        
+    else %If you don't use the defaults
+        
+        
+        %Plot
+        figure; %Blue
+        plot(dists2,'b-x');
+        title('Distance from red arm marker to blue hand markers');
+        figure; %Red
+        plot(dists3,'r-x');
+        hold on;
+        plot(dists4,'m-x');
+        title('Distance from blue arm marker to red hand marker');
+        legend('Dist to pt3', 'Dist to pt4')
+        figure; %Green
+        plot(dists1,'g-x');
+        hold on;
+        plot(dists5,'c-x');
+        title('Distance from red arm marker to green hand markers');
+        legend('Dist to pt1','Dist to pt5');
+        
+        
+        
+        % Enter hand distance limits from red arm
+        
+        str1='Input green_hand_dists_redarm \n';
+        str2='Lower and upper limits of distances of the green hand markers (green and cyan above) to the red arm marker\n';
+        str3='Value is generally ~ [.15,.35] (around 5 cm from most points) \n';
+        green_hand_dists_redarm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(green_hand_dists_redarm)==2)
+            green_hand_dists_redarm=input('Re-enter valid values');
+        end
+        
+        str1='Input red_hand_dists_redarm \n';
+        str2='Lower and upper limits of distances of the red hand markers (red above) to the red arm marker\n';
+        str3='Value is generally ~ [.15,.34] (around 5 cm from most points) \n';
+        red_hand_dists_redarm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(red_hand_dists_redarm)==2)
+            red_hand_dists_redarm=input('Re-enter valid values');
+        end
+        
+        str1='Input blue_hand_dists_redarm \n';
+        str2='Lower and upper limits of distances of the blue hand markers (blue above) to the red arm marker\n';
+        str3='Value is generally ~ [.15,.34] (around 5 cm from most points) \n';
+        blue_hand_dists_redarm=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(length(blue_hand_dists_redarm)==2)
+            blue_hand_dists_redarm=input('Re-enter valid values');
+        end
+        
+    end
 end
-%% SET 7. hand distance limits from red arm
 
-if first_time
-    
-    str1='7A. Input green_hand_dists_redarm \n';
-    str2='Lower and upper limits of distances of the green hand markers (green and cyan above) to the red arm marker\n';
-    str3='Value is generally ~ [.15,.35] \n';    
-    green_hand_dists_redarm=input([str1 str2 str3]);
-    
-    str1='7B. Input red_hand_dists_redarm \n';
-    str2='Lower and upper limits of distances of the red hand markers (red and magenta above) to the red arm marker\n';
-    str3='Value is generally ~ [.15,.34] \n';    
-    red_hand_dists_redarm=input([str1 str2 str3]);
-    
-    str1='7C. Input blue_hand_dists_redarm \n';
-    str2='Lower and upper limits of distances of the blue hand markers (blue above) to the red arm marker\n';
-    str3='Value is generally ~ [.18,.35] \n';    
-    blue_hand_dists_redarm=input([str1 str2 str3]);
-    
-    
-end
-%% Plot hand distances from each other
-%Plots the distances of the red hand markers to each other and the green
-%hand markers to each other, in order to determine what distances are
-%allowed (for rerunning the hand marker tracking)
+%% Set distance limits between green hand markers
+
+%Plots the distances of the green hand markers to each other, in order to
+%determine what distances are allowed (for rerunning the hand marker tracking)
 
 if first_time
     %Calculate distances
-    for i=1:n_times
+    for i=1:n_times_prelim
         dists1(i)=pdist2(all_medians(5,:,i),all_medians(1,:,i)); %Distances between green hand markers
-        dists2(i)=pdist2(all_medians(3,:,i),all_medians(4,:,i)); %Distances between red hand markers
     end
-    %Plot
-    figure; plot(dists1,'g'); hold on;
-    plot(dists2,'r');
-    legend('5-1','3-4')
+    
+    
+    if use_defaults %If you use the defaults
+        
+        %Get the distances at the times you include (specified when setting
+        %distances to red elbow marker)
+        dists1=dists1(times_inc);
+        
+        green_dist_min=nanmean(dists1)-5*nanstd(dists1);
+        
+        if green_dist_min<.02 %Should never be less than this value
+            green_dist_min=.02;
+        end
+        
+    else %If you don't use the defaults
+        
+     
+        %Plot
+        figure; plot(dists1,'g');
+        title('Distance between green hand markers');
+        
+        
+        % Enter minimum hand distances from each other
+        
+        str1='Input green_dist_min \n';
+        str2='Minimum distance allowed between green hand markers (green above)\n';
+        str3='Value is generally ~ .03 \n';
+        green_dist_min=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(isnumeric(green_dist_min))
+            green_dist_min=input('Re-enter valid values');
+        end
+        
+    end
+    
 end
-%% SET 8. minimum hand distances from each other
+
+%% Set distance limits between red hand markers
+
+%Plots the distances of the red hand markers to each other, in order to
+%determine what distances are allowed (for rerunning the hand marker tracking)
 
 if first_time
+    %Calculate distances
+    for i=1:n_times_prelim
+        dists2(i)=pdist2(all_medians(3,:,i),all_medians(4,:,i)); %Distances between green hand markers
+    end
     
-    str1='8A. Input red_dist_min \n';
-    str2='Minimum distance allowed between red hand markers (red above)\n';
-    str3='Value is generally ~ .02 \n';    
-    red_dist_min=input([str1 str2 str3]);
     
-    str1='8B. Input green_dist_min \n';
-    str2='Minimum distance allowed between green hand markers (green above)\n';
-    str3='Value is generally ~ .03 \n';    
-    green_dist_min=input([str1 str2 str3]);
+    if use_defaults %If you use the defaults
+        
+        %Get the distances at the times you include (specified when setting
+        %distances to red elbow marker)
+        dists2=dists2(times_inc);
+        
+        red_dist_min=nanmean(dists2)-5*nanstd(dists2);
+        
+%         if red_dist_min<.01 %Should never be less than this value
+%             red_dist_min=.01;
+%         end
+        
+    else %If you don't use the defaults
+        
+     
+        %Plot
+        figure; plot(dists2,'r');
+        title('Distance between red hand markers');
+        
+        
+        % Enter minimum hand distances from each other
+        
+        str1='Input red_dist_min \n';
+        str2='Minimum distance allowed between red hand markers (red above)\n';
+        str3='Value is generally ~ .02 \n';
+        red_dist_min=input([str1 str2 str3]);
+        %Make sure entry was valid
+        while ~(isnumeric(red_dist_min))
+            red_dist_min=input('Re-enter valid values');
+        end
+        
+    end
     
 end
+
+
+
+
 %% Red Hand (Redo)
 
 %Initializations
@@ -2252,7 +2595,6 @@ end
 
 
 %% save
-savefile=1;
 if savefile
     date2=['20' num2str(date(7:8)) num2str(date(1:2)) num2str(date(4:5))];
     fname_save=[main_dir monkey '/Color_Tracking/' date '/Markers/markers_' monkey '_' date2 '_' exp '_' num];
