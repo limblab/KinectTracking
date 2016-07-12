@@ -49,7 +49,8 @@ else
     %marker is not included.
     curr_num_clust=num_clust+1;
     med_dist=zeros(1,num_clust); %Initialize med_dist so that  we will enter the while loop below
-    
+    med_dist_xy=zeros(1,num_clust);
+        
     if size(loc,1)<curr_num_clust %In case there are fewer points than clusters I'm fitting
             curr_num_clust=size(loc,1); %Set the number of clusters to be the number of points
     end
@@ -65,7 +66,7 @@ else
     %2. If any of the distances between the markers are NaNs (which happens if no points are assigned to a cluster).
     % Additionally, we don't run through the while loop if there if there
     % curr_num_clust=0 (if the previous run had curr_num_clust=1, meaning it used 1 cluster).
-    while ((any(med_dist<dist_min) || any(isnan(med_dist))) && curr_num_clust>=1)      
+    while ((any(med_dist<dist_min) || any(isnan(med_dist)) || any(med_dist_xy<.005)) && curr_num_clust>=1)      
         
         %1. Below, we will cluster the points. Depending on the situation, we
         %will sometimes use known starting points. Note that when we don't
@@ -131,10 +132,13 @@ else
         %3. Calculate the distance between markers
         med_dist=pdist(meds);
         
+        %3b. Calculate the x/y distance between markers
+        med_dist_xy=pdist(meds(:,1:2));
+        
         %4. Lower the number of clusters by 1 for the next run in the while
         %loop if any of the distances between markers is too small or NaNs
         %(when there were no points in a cluster).
-        if any(med_dist<dist_min) || any(isnan(med_dist))
+        if any(med_dist<dist_min) || any(isnan(med_dist)) || any(med_dist_xy<.005)
             curr_num_clust=curr_num_clust-1;
         end
         

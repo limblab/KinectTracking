@@ -268,7 +268,7 @@ for i=start:finish
     loc(rmv,:)=[];
         
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     %3. Plot original image and cluster centers
     plot_clusts( plot_on, num_clust, x, y, z, medians, i, t, pause_time, xlims, ylims, zlims )
@@ -476,7 +476,7 @@ for i=start:finish
     loc(rmv,:)=[];
        
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     %3. Plot original image and cluster centers
     plot_clusts( plot_on, num_clust, x, y, z, medians, i, t, pause_time, xlims, ylims, zlims )
@@ -598,7 +598,7 @@ if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a gree
         
         
         %2. Cluster and assign
-        [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+        [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
         
         %3. Plot original image and cluster centers
         plot_clusts( plot_on, num_clust, x, y, z, medians, i, t, pause_time, xlims, ylims, zlims )
@@ -664,7 +664,7 @@ for i=start:finish
     loc(rmv,:)=[];
         
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     %3. Plot original image and cluster centers
     plot_clusts( plot_on, num_clust, x, y, z, medians, i, t, pause_time, xlims, ylims, zlims )
@@ -1410,7 +1410,7 @@ for i=start:finish
     loc(rmv,:)=[];
         
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     %Update how many frames markers have been missing
     %If marker1 is missing, add 1 to num_gone1. Otherwise set num_gone1=0
@@ -1583,7 +1583,7 @@ for i=start:finish
     
     
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     
     %Update how many frames markers have been missing
@@ -1698,7 +1698,7 @@ for i=start:finish
     
     
     %2. Cluster and assign
-    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
+    [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
     
     %Update how many frames markers have been missing
     %If marker1 is missing, add 1 to num_gone1. Otherwise set num_gone1=0
@@ -2244,7 +2244,7 @@ all_medians2(3,:,switch34)=all_medians2(4,:,switch34);
 all_medians(4,:,switch34)=temp;
 all_medians2(4,:,switch34)=temp2;
 
-%% SET 12. Plot questionable ones
+%% Plot questionable ones
 
 %Above, we switched the red markers when we were sure about it. That is
 %when going forward and backward through time, both agreed that the markers
@@ -2264,11 +2264,18 @@ wdw=20; %Time window for plots below
 %or backward time (see previous section), but not both.
 idxs=find((change_forward & ~change_backward) | (~change_forward & change_backward));
 
-%Initialize points to switch
-switch34_cell=cell(1,length(idxs));
+
+
+
 
 %Plot those times
 for i=1:length(idxs)
+    
+    plot_together_3colors_func(idxs(i), [1 4 5], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+    title(num2str(idxs(i)));
+    movegui('northwest')
+    
+    %Plot those times
     figure;
     plot(idxs(i)-wdw:idxs(i)+wdw,dists1(idxs(i)-wdw:idxs(i)+wdw),'g-x');
     hold on;
@@ -2276,35 +2283,48 @@ for i=1:length(idxs)
     plot(idxs(i)-wdw:idxs(i)+wdw,dists3(idxs(i)-wdw:idxs(i)+wdw),'r-x');
     plot(idxs(i)-wdw:idxs(i)+wdw,dists4(idxs(i)-wdw:idxs(i)+wdw),'m-x');
     plot(idxs(i)-wdw:idxs(i)+wdw,dists5(idxs(i)-wdw:idxs(i)+wdw),'c-x');
-    title(num2str(idxs(i)));
+    title(num2str(idxs(i)));    
+    movegui('north')
     
-    switch34_cell{i}=input('12. Time points to switch (red and pink) \n');
+    %Points to Remove
+    str1='Pt 3 is farther from elbow than Pt 1 \n';
+    str2='Type in the points to remove \n';
+    str3='e.g. 1, or [1,2] - Note that enter removes no points \n';
+    rmv=input([str1 str2 str3]);
+    %Make sure entry is valid (either empty, or composed of markers)
+    while ~(isempty(rmv) || (all(mod(rmv,1)==0) && all(rmv>0) && all(rmv<=size(all_medians,1))))
+        rmv=input('Enter valid point(s)');
+    end
+    for j=1:length(rmv)
+        all_medians(rmv(j),:,idxs(i))=NaN;
+    end
     
+    %Points to Switch
+    str2='Type in the points to switch \n';
+    str3='e.g. [3,4], or [3,4; 5,6] - Note that enter switches no points \n';
+    switches=input([str2 str3]);
+    %Make sure entry is valid (either empty, or composed of markers)
+    while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
+        rmv=input('Enter valid point(s)');
+    end
+    for j=1:size(switches,1)
+        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+    end
 end
 
-%% Set more red hand markers to switch (the questionable ones from above)
 
-switch34=[switch34_cell{:}]; %The time points to switch
-temp=all_medians(3,:,switch34);
-temp2=all_medians(3,:,switch34);
-all_medians(3,:,switch34)=all_medians(4,:,switch34);
-all_medians2(3,:,switch34)=all_medians2(4,:,switch34);
-all_medians(4,:,switch34)=temp;
-all_medians2(4,:,switch34)=temp2;
-
-
-
-
-
-%% Recalculate hand distances from the red elbow marker (in order to make comparisons of hand points)
-
-for i=1:n_times
-    dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i));
-    dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i));
-    dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
-    dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i));
-    dists5(i)=pdist2(all_medians(10,:,i),all_medians(5,:,i));
+% Recalculate distances from red elbow to points on the hand (due to above changes)
+if ~isempty(idxs) %Only redo if there was a change above
+    for i=1:n_times
+        dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i));
+        dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i));
+        dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
+        dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i));
+        dists5(i)=pdist2(all_medians(10,:,i),all_medians(5,:,i));
+    end
 end
+
+
 
 %% Make corrections when marker 5 has a larger distance to the elbow than marker 3
 
@@ -2583,7 +2603,7 @@ all_medians(5,:,rmv5)=NaN;
 
 
 
-%% 10
+%% 10. CLEAN UP DATA A LITTLE, AND SAVE
 
 %% Update all_medians2 to deal with removals
 
@@ -2615,101 +2635,19 @@ all_medians(:,:,start:finish)=temp;
 all_medians2(:,:,start:finish)=temp2;
 
 
-%% Get smoothed time points
+%% Smooth marker trajectories
 
-all_medians_smooth=NaN(size(all_medians));
-for i=1:10
-    for j=1:3
-        temp=reshape(all_medians(i,j,:),[1,size(all_medians,3)]);
-        all_medians_smooth(i,j,:)=medfilt1nan(temp,5);
-    end
-end
-
-
-%% Hand Removals when there is no elbow
-
-% for i=1:n_times
-%     dists(i)=pdist2(all_medians(4,:,i),all_medians(5,:,i));
-%     dists2(i)=pdist2(all_medians(3,:,i),all_medians(5,:,i));
-%     dists3(i)=pdist2(all_medians(3,:,i),all_medians(4,:,i));
+% all_medians_smooth=NaN(size(all_medians));
+% for i=1:10
+%     for j=1:3
+%         temp=reshape(all_medians(i,j,:),[1,size(all_medians,3)]);
+%         all_medians_smooth(i,j,:)=medfilt1nan(temp,5);
+%     end
 % end
-% figure; plot(dists)
-% hold on;
-% plot(dists2)
-% plot(dists3)
 
 
-%% Update the hand markers
 
-% num_clusts=6; %5 hand and 1 elbow
-% num_dists=num_clusts*(num_clusts-1)/2;
-%
-% hand_dists=NaN(n_times,num_dists);
-% hand_dists_matrix=NaN(num_clusts,num_clusts,n_times);
-% for i=1:n_times
-%     hand_dists(i,:)=pdist(all_medians([1:5 10],:,i));
-%     %12 13 14 15 23 24 25 34 35 45 (when it was just 1-5)
-%     hand_dists_matrix(:,:,i)=squareform(hand_dists(i,:));
-% end
-% med_hand_dists=nanmedian(hand_dists);
-% med_hand_dists_matrix=squareform(med_hand_dists);
-% med_hand_dists_matrix_reshape=repmat(med_hand_dists_matrix,[1,1,n_times]);
-%
-%
-% perm1=[5 2 3 4 1 6]; %1 and 5 switched
-% perm2=[1 2 4 3 5 6]; %3 and 4 switched
-% perm3=[5 2 4 3 1 6]; %Both switched
-%
-% %Permutation of hand distances
-% hand_dists_matrix1=hand_dists_matrix(perm1,perm1,:);
-% hand_dists_matrix2=hand_dists_matrix(perm2,perm2,:);
-% hand_dists_matrix3=hand_dists_matrix(perm3,perm3,:);
-%
-% num_hand_marks=reshape(sum(~isnan(all_medians(1:5,1,:))),[n_times,1]);
-% elbow_weight=1./num_hand_marks;
-% elbow_weight(elbow_weight==Inf)=1;
-% weight_matrix=ones(size(hand_dists_matrix));
-% % weight_matrix(6,1,:)=elbow_weight;
-% % weight_matrix(6,2,:)=elbow_weight;
-% % weight_matrix(6,3,:)=elbow_weight;
-% % weight_matrix(6,4,:)=elbow_weight;
-% % weight_matrix(6,5,:)=elbow_weight;
-% % weight_matrix(6,6,:)=elbow_weight;
-% % weight_matrix(1,6,:)=elbow_weight;
-% % weight_matrix(2,6,:)=elbow_weight;
-% % weight_matrix(3,6,:)=elbow_weight;
-% % weight_matrix(4,6,:)=elbow_weight;
-% % weight_matrix(5,6,:)=elbow_weight;
-% % weight_matrix(6,6,:)=elbow_weight;
-%
-% %Differences of hand distances from expected (for actual and permutations)
-%
-% sse=reshape(nansum(nansum(weight_matrix.*(hand_dists_matrix-med_hand_dists_matrix_reshape).^2,1),2),[1,n_times]);
-% sse1=reshape(nansum(nansum(weight_matrix.*(hand_dists_matrix1-med_hand_dists_matrix_reshape).^2,1),2),[1,n_times]);
-% sse2=reshape(nansum(nansum(weight_matrix.*(hand_dists_matrix2-med_hand_dists_matrix_reshape).^2,1),2),[1,n_times]);
-% sse3=reshape(nansum(nansum(weight_matrix.*(hand_dists_matrix3-med_hand_dists_matrix_reshape).^2,1),2),[1,n_times]);
-%
-% [~,m]=min([sse; sse1; sse2; sse3]);
-%
-%
-%
-%
-%
-%
-%
-% %     if m(i)==2 || m(i)==4
-% %         temp=all_medians(5,:,i);
-% %         all_medians(5,:,i)=all_medians(8,:,i);
-% %         all_medians(8,:,i)=temp;
-% %     end
-% %     if m(i)==3 || m(i)==4
-% %         temp=all_medians(6,:,i);
-% %         all_medians(6,:,i)=all_medians(9,:,i);
-% %         all_medians(9,:,i)=temp;
-% %     end
-
-
-%% save
+%% Save
 if savefile
     date2=['20' num2str(date(7:8)) num2str(date(1:2)) num2str(date(4:5))];
     fname_save=[main_dir monkey '/Color_Tracking/' date '/Markers/markers_' monkey '_' date2 '_' exp '_' num];
