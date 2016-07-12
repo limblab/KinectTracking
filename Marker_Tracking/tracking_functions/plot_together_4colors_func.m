@@ -31,7 +31,7 @@ plot_colors_all=[1 0 0; 0 1 0; 0 0 1; 1 1 0; 0 1 1; 1 0 1; 0 0 0; 1 .5 0; .5 0 1
 plot_colors=plot_colors_all(markers,:);
 
 
-i=frame;
+i=frame+start-1;
 
 %Plot Original Points
 if plot_original

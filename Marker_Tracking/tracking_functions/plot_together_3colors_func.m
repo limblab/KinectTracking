@@ -19,6 +19,10 @@ xlims=[-.5 .5];
 ylims=[-.5 .5];
 zlims=[.7 1.4];
 
+% xlims=[-.7 .7];
+% ylims=[-.7 .7];
+% zlims=[.7 3];
+
 %Initialize figure
 figure;
 set(gca,'NextPlot','replacechildren');
@@ -31,7 +35,7 @@ plot_colors_all=[1 0 0; 0 1 0; 0 0 1; 1 1 0; 0 1 1; 1 0 1; 0 0 0; 1 .5 0; .5 0 1
 plot_colors=plot_colors_all(markers,:);
 
 
-i=frame;
+i=frame+start-1;
 
 %Plot Original Points
 if plot_original
