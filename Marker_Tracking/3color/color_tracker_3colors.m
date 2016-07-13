@@ -14,9 +14,9 @@
 main_dir='/Users/jig289/Box Sync/Tracking_Data/';
 %File to load
 monkey='Chips';
-date='12-10-15'; %mo-day-yr
-exp='RW_PM';
-num='002';
+date='12-02-15'; %mo-day-yr
+exp='RW_DL';
+num='001';
 
 fname_load=ls([main_dir monkey '/Color_Tracking/' date '/Tracking/color_tracking ' exp '_' num '*']);
 load(deblank(fname_load));
@@ -40,9 +40,9 @@ if ~first_time
 end
 
 %TIME INITIALIZATIONS
-start=536; %Time point we're starting at
+start=4; %Time point we're starting at
 n=length(color1);
-finish=n; %Time point we're finishing at
+finish=3000;%n; %Time point we're finishing at
 n_times=finish-start+1; %Number of time points (frames)
 
 n_times_prelim=n_times;
@@ -2094,17 +2094,204 @@ if ~isempty(idxs) %Only redo if there was a change above
     end
 end
 
+%% Automatically switch red hand points when one is missing (the assignment was wrong) - Time # 1
+
+%Here, we'll determine what time points to switch the red hand markers (3
+%and 4) when one of those markers was missing. That is, there was a single
+%marker that was incorrectly assigned.
+%We will determine this based on having a expected/unexpected distance from
+%the red elbow marker. We will go both forward and backward in time, to see
+%whether switching the marker assignment would lead to distances from the
+%elbow that are more consistent with the previous time.
+
+%Initializations for forward run
+dists3_forward=NaN(1,n_times);
+dists4_forward=NaN(1,n_times);
+dists33_forward=NaN(1,n_times);
+dists44_forward=NaN(1,n_times);
+dists34_forward=NaN(1,n_times);
+dists43_forward=NaN(1,n_times);
+change_forward=zeros(1,n_times);
+
+%Calculate the distances from the red hand markers (3 and 4) to the red
+%elbow marker (10)
+for i=1:n_times    
+    dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i)); %Distances from marker 3 to the elbow (marker 10)
+    dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i)); %Distances from marker 4 to the elbow (marker 10)
+    % dists3(i)=pdist2(all_medians(6,:,i),all_medians_temp(3,:,i));
+    % dists4(i)=pdist2(all_medians(6,:,i),all_medians_temp(4,:,i));
+end
 
 
+for i=1:n_times
+    %dists3_forward is the most recently known distance from marker 3 to
+    %the elbow (the distance from the last frame where neither marker is missing).
+    if ~isnan(dists3(i))
+        dists3_forward(i)=dists3(i);
+    else
+        dists3_forward(i)=dists3_forward(i-1);
+    end
+    %dists3_forward is the most recently known distance from marker 3 to
+    %the elbow (the distance from the last frame where neither marker is missing).
+    if ~isnan(dists4(i))
+        dists4_forward(i)=dists4(i);
+    else
+        dists4_forward(i)=dists4_forward(i-1);
+    end
+    %Calculate the differences in distances between successive timepoints.
+    if i>1
+        dists33_forward(i)=abs(dists3_forward(i)-dists3_forward(i-1)); %The difference in the distance of marker 3 from in current frame and marker 3 from the prevous frame
+        dists44_forward(i)=abs(dists4_forward(i)-dists4_forward(i-1)); %The difference in the distance of marker 4 from in current frame and marker 4 from the prevous frame
+        dists34_forward(i)=abs(dists4_forward(i)-dists3_forward(i-1)); %The difference in the distance of marker 4 from in current frame and marker 3 from the prevous frame
+        dists43_forward(i)=abs(dists3_forward(i)-dists4_forward(i-1)); %The difference in the distance of marker 3 from in current frame and marker 4 from the prevous frame
+    end
+  
+    %According to the forward direction, we want to switch markers 3 and 4
+    %(correct the incorrect assignment) when:
+    %The marker was identified as marker 4, and the current marker 4
+    %distance (to the elbow) is closer to the previous marker 3 distance
+    %than the previous marker 4 distance.
+    if ((dists34_forward(i)<dists44_forward(i)) & isnan(dists3(i)) & ~isnan(dists4(i)))
+        change_forward(i)=1;
+        dists3_forward(i)=dists4_forward(i);
+        dists4_forward(i)=dists4_forward(i-1);
+    end
+    %The marker was identified as marker 3, and the current marker 3
+    %distance (to the elbow) is closer to the previous marker 4 distance
+    %than the previous marker 3 distance.
+    if ((dists43_forward(i)<dists33_forward(i)) & ~isnan(dists3(i)) & isnan(dists4(i)))
+        change_forward(i)=1;
+        dists4_forward(i)=dists3_forward(i);
+        dists3_forward(i)=dists3_forward(i-1);
+    end
+end
+
+%Next we do the same as above, but backwards in time.
+
+%Initializations for backwards run
+dists3_backward=NaN(1,n_times);
+dists4_backward=NaN(1,n_times);
+dists33_backward=NaN(1,n_times);
+dists44_backward=NaN(1,n_times);
+dists34_backward=NaN(1,n_times);
+dists43_backward=NaN(1,n_times);
+change_backward=zeros(1,n_times);
+
+for i=n_times-1:-1:1
+    %dists3_backward is the next known distance from marker 3 to
+    %the elbow (the distance from the next frame where neither marker is missing).
+    if ~isnan(dists3(i))
+        dists3_backward(i)=dists3(i);
+    else
+        dists3_backward(i)=dists3_backward(i+1);
+    end
+    %dists4_backward is the next known distance from marker 4 to
+    %the elbow (the distance from the next frame where neither marker is missing).
+    if ~isnan(dists4(i))
+        dists4_backward(i)=dists4(i);
+    else
+        dists4_backward(i)=dists4_backward(i+1);
+    end
+    
+    %Calculate the differences in distances between successive timepoints.
+    if i<n_times
+        dists33_backward(i)=abs(dists3_backward(i+1)-dists3_backward(i)); %The difference in the distance of marker 3 from in current frame and marker 3 from the next frame
+        dists44_backward(i)=abs(dists4_backward(i+1)-dists4_backward(i)); %The difference in the distance of marker 4 from in current frame and marker 4 from the next frame
+        dists34_backward(i)=abs(dists4_backward(i+1)-dists3_backward(i)); %The difference in the distance of marker 3 from in current frame and marker 4 from the next frame
+        dists43_backward(i)=abs(dists3_backward(i+1)-dists4_backward(i)); %The difference in the distance of marker 4 from in current frame and marker 3 from the next frame
+    end
+    
+    %According to the backward direction, we want to switch markers 3 and 4
+    %(correct the incorrect assignment) when:
+    %The marker was identified as marker 4, and the current marker 4
+    %distance (to the elbow) is closer to the next marker 3 distance
+    %than the next marker 4 distance.
+    if ((dists43_backward(i)<dists44_backward(i)) & isnan(dists3(i)) & ~isnan(dists4(i)))
+        change_backward(i)=1;
+        dists3_backward(i)=dists4_backward(i);
+        dists4_backward(i)=dists4_backward(i+1);
+    end
+    %The marker was identified as marker 3, and the current marker 3
+    %distance (to the elbow) is closer to the next marker 4 distance
+    %than the next marker 3 distance.
+    if ((dists34_backward(i)<dists33_forward(i)) & ~isnan(dists3(i)) & isnan(dists4(i)))
+        change_backward(i)=1;
+        dists4_backward(i)=dists3_backward(i);
+        dists3_backward(i)=dists3_backward(i+1);
+    end
+    
+end
+
+%Automatically make the switch if there should be a switch (according to
+%above) in both the foward and backward directions. In the next section,
+%we'll manually look at the cases of disagreement between the forward and
+%backward directions.
+switch34=change_forward & change_backward;
+temp=all_medians(3,:,switch34);
+temp2=all_medians2(3,:,switch34);
+all_medians(3,:,switch34)=all_medians(4,:,switch34);
+all_medians2(3,:,switch34)=all_medians2(4,:,switch34);
+all_medians(4,:,switch34)=temp;
+all_medians2(4,:,switch34)=temp2;
+
+%% Find times where a red marker is at a non-marker location (not at the location 3 or 4 is supposed to be at)
 
 
+for i=1:n_times
+        dists1(i)=pdist2(all_medians(5,:,i),all_medians(3,:,i));
+        dists2(i)=pdist2(all_medians(5,:,i),all_medians(4,:,i));
+end
 
+outlier1=(dists1>nanmean(dists1)+5*nanstd(dists1)) | (dists1<nanmean(dists1)-5*nanstd(dists1));
+outlier2=(dists2>nanmean(dists2)+5*nanstd(dists2)) | (dists2<nanmean(dists2)-5*nanstd(dists2));
 
+idxs=find(~isnan(dists1) & ~isnan(dists2) & (outlier1|outlier2) );
 
+%Plot those times
+for i=1:length(idxs)
+    
+    plot_together_3colors_func(idxs(i), [1 3 4 5], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+    title(num2str(idxs(i)));
+    movegui('northwest')
+    
+    %Plot those times
+    figure;
+    plot(idxs(i)-wdw:idxs(i)+wdw,dists1(idxs(i)-wdw:idxs(i)+wdw),'g-x');
+    hold on;
+    plot(idxs(i)-wdw:idxs(i)+wdw,dists2(idxs(i)-wdw:idxs(i)+wdw),'b-x');
+    plot(idxs(i)-wdw:idxs(i)+wdw,dists3(idxs(i)-wdw:idxs(i)+wdw),'r-x');
+    plot(idxs(i)-wdw:idxs(i)+wdw,dists4(idxs(i)-wdw:idxs(i)+wdw),'m-x');
+    plot(idxs(i)-wdw:idxs(i)+wdw,dists5(idxs(i)-wdw:idxs(i)+wdw),'c-x');
+    title(num2str(idxs(i)));    
+    movegui('north')
+    
+    %Points to Remove
+    str1='Pt 3 is farther from elbow than Pt 1 \n';
+    str2='Type in the points to remove \n';
+    str3='e.g. 1, or [1,2] - Note that enter removes no points \n';
+    rmv=input([str1 str2 str3]);
+    %Make sure entry is valid (either empty, or composed of markers)
+    while ~(isempty(rmv) || (all(mod(rmv,1)==0) && all(rmv>0) && all(rmv<=size(all_medians,1))))
+        rmv=input('Enter valid point(s)');
+    end
+    for j=1:length(rmv)
+        all_medians(rmv(j),:,idxs(i))=NaN;
+    end
+    
+    %Points to Switch
+    str2='Type in the points to switch \n';
+    str3='e.g. [3,4], or [3,4; 5,6] - Note that enter switches no points \n';
+    switches=input([str2 str3]);
+    %Make sure entry is valid (either empty, or composed of markers)
+    while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
+        rmv=input('Enter valid point(s)');
+    end
+    for j=1:size(switches,1)
+        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+    end
+end
 
-
-
-%% Switch red hand points when one is missing (the assignment was wrong)
+%% Automatically switch red hand points when one is missing (the assignment was wrong) - Time # 2
 
 %Here, we'll determine what time points to switch the red hand markers (3
 %and 4) when one of those markers was missing. That is, there was a single
@@ -2271,7 +2458,7 @@ idxs=find((change_forward & ~change_backward) | (~change_forward & change_backwa
 %Plot those times
 for i=1:length(idxs)
     
-    plot_together_3colors_func(idxs(i), [1 4 5], [1:10], all_medians, color1, color2, color3, start, finish, 1)
+    plot_together_3colors_func(idxs(i), [1 3 4 5], [1:10], all_medians, color1, color2, color3, start, finish, 1)
     title(num2str(idxs(i)));
     movegui('northwest')
     
@@ -2313,18 +2500,14 @@ for i=1:length(idxs)
 end
 
 
-% Recalculate distances from red elbow to points on the hand (due to above changes)
-if ~isempty(idxs) %Only redo if there was a change above
-    for i=1:n_times
-        dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i));
-        dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i));
-        dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
-        dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i));
-        dists5(i)=pdist2(all_medians(10,:,i),all_medians(5,:,i));
-    end
+%% Recalculate distances from red elbow to points on the hand (due to above changes)
+for i=1:n_times
+    dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i));
+    dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i));
+    dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
+    dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i));
+    dists5(i)=pdist2(all_medians(10,:,i),all_medians(5,:,i));
 end
-
-
 
 %% Make corrections when marker 5 has a larger distance to the elbow than marker 3
 
@@ -2390,7 +2573,7 @@ for i=1:length(idxs)
     title(num2str(idxs(i)));
     
     %Points to Remove
-    str1='Pt 3 is farther from elbow than Pt 1 \n';
+    str1='Pt 4 is farther from elbow than Pt 2 \n';
     str2='Type in the points to remove \n';
     str3='e.g. 1, or [1,2] - Note that enter removes no points \n';
     rmv=input([str1 str2 str3]);
@@ -2533,12 +2716,12 @@ if first_time
     else %If you don't use the defaults
         
         %Plot
-        figure; % Yellow
-        plot(dists4,'y-x');
         figure; %Blue
         plot(dists2,'b-x');
         figure; %Red
         plot(dists3,'r-x');
+        hold on
+        plot(dists4,'m-x');
         figure; %Green
         plot(dists1,'g-x');
         hold on;
@@ -2574,14 +2757,6 @@ if first_time
             blue_keep=input('Re-enter valid values');
         end
         
-        str1='Input yellow_keep \n';
-        str2='Lower and upper limits of distances of the yellow hand markers (yellow above) to the green shoulder marker\n';
-        str3='Value is generally ~ [.15,.45] \n';
-        yellow_keep=input([str1 str2 str3]);
-        %Make sure entry was valid
-        while ~(length(yellow_keep)==2)
-            yellow_keep=input('Re-enter valid values');
-        end
     end
 end
 
@@ -2593,7 +2768,7 @@ rmv2=dists2<blue_keep(1) | dists2>blue_keep(2);
 all_medians(2,:,rmv2)=NaN;
 rmv3=dists3<red_keep(1) | dists3>red_keep(2);
 all_medians(3,:,rmv3)=NaN;
-rmv4=dists4<yellow_keep(1) | dists4>yellow_keep(2);
+rmv4=dists4<red_keep(1) | dists4>red_keep(2);
 all_medians(4,:,rmv4)=NaN;
 rmv5=dists5<green_keep(1) | dists5>green_keep(2);
 all_medians(5,:,rmv5)=NaN;

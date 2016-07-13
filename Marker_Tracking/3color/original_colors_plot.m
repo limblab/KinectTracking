@@ -6,7 +6,7 @@
 n=length(color1);
 xlims=[-.4 .5];
 ylims=[-.4 .4]; 
-zlims=[.8 3];
+zlims=[.8 1.5];
 
 figure;
 
@@ -16,7 +16,7 @@ zlim(ylims)
 set(gca,'NextPlot','replacechildren');
 
 
-for i=530:540 %536
+for i=1:100 %536
     temp=color1{i};
     x=temp(1:end/3);
     y=temp(end/3+1:2*end/3);
