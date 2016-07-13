@@ -15,8 +15,8 @@ main_dir='/Users/jig289/Box Sync/Tracking_Data/';
 %File to load
 monkey='Chips';
 date='12-02-15'; %mo-day-yr
-exp='RW_DL';
-num='001';
+exp='RW_PM';
+num='003';
 
 fname_load=ls([main_dir monkey '/Color_Tracking/' date '/Tracking/color_tracking ' exp '_' num '*']);
 load(deblank(fname_load));
@@ -24,10 +24,10 @@ load(deblank(fname_load));
 
 %% User Options / Initializations
 
-first_time=1; %If this is the first file from a date, set equal to 1 (there are more initializations)
+first_time=0; %If this is the first file from a date, set equal to 1 (there are more initializations)
 
 %Save the output?
-savefile=0;
+savefile=1;
 
 %Use default values for parameters?
 use_defaults=0;
@@ -40,9 +40,9 @@ if ~first_time
 end
 
 %TIME INITIALIZATIONS
-start=4; %Time point we're starting at
+start=1; %Time point we're starting at
 n=length(color1);
-finish=3000;%n; %Time point we're finishing at
+finish=n-300; %Time point we're finishing at (I generally go until 10 seconds before the end of the file, since the last 10 seconds is usually after the monkey throws away the handle)
 n_times=finish-start+1; %Number of time points (frames)
 
 n_times_prelim=n_times;
@@ -2234,18 +2234,30 @@ all_medians2(3,:,switch34)=all_medians2(4,:,switch34);
 all_medians(4,:,switch34)=temp;
 all_medians2(4,:,switch34)=temp2;
 
-%% Find times where a red marker is at a non-marker location (not at the location 3 or 4 is supposed to be at)
 
 
+%Recalculate distances
 for i=1:n_times
-        dists1(i)=pdist2(all_medians(5,:,i),all_medians(3,:,i));
-        dists2(i)=pdist2(all_medians(5,:,i),all_medians(4,:,i));
+    dists1(i)=pdist2(all_medians(10,:,i),all_medians(1,:,i));
+    dists2(i)=pdist2(all_medians(10,:,i),all_medians(2,:,i));
+    dists3(i)=pdist2(all_medians(10,:,i),all_medians(3,:,i));
+    dists4(i)=pdist2(all_medians(10,:,i),all_medians(4,:,i));
+    dists5(i)=pdist2(all_medians(10,:,i),all_medians(5,:,i));
 end
 
-outlier1=(dists1>nanmean(dists1)+5*nanstd(dists1)) | (dists1<nanmean(dists1)-5*nanstd(dists1));
-outlier2=(dists2>nanmean(dists2)+5*nanstd(dists2)) | (dists2<nanmean(dists2)-5*nanstd(dists2));
+%% Find times where a red marker is at a non-marker location (not at the location 3 or 4 is supposed to be at)
 
-idxs=find(~isnan(dists1) & ~isnan(dists2) & (outlier1|outlier2) );
+dists1a=NaN(1,n_times);
+dists2a=NaN(1,n_times);
+for i=1:n_times
+        dists1a(i)=pdist2(all_medians(5,:,i),all_medians(3,:,i));
+        dists2a(i)=pdist2(all_medians(5,:,i),all_medians(4,:,i));
+end
+
+outlier1=(dists1a>nanmean(dists1a)+5*nanstd(dists1a)) | (dists1<nanmean(dists1a)-5*nanstd(dists1a));
+outlier2=(dists2a>nanmean(dists2a)+5*nanstd(dists2a)) | (dists2<nanmean(dists2a)-5*nanstd(dists2a));
+
+idxs=find(~isnan(dists1a) & ~isnan(dists2a) & (outlier1|outlier2) );
 
 %Plot those times
 for i=1:length(idxs)
@@ -2255,6 +2267,7 @@ for i=1:length(idxs)
     movegui('northwest')
     
     %Plot those times
+    wdw=20;
     figure;
     plot(idxs(i)-wdw:idxs(i)+wdw,dists1(idxs(i)-wdw:idxs(i)+wdw),'g-x');
     hold on;
@@ -2519,7 +2532,7 @@ idxs=find(dists5>dists3);
 %Plot those times
 for i=1:length(idxs)
     
-    plot_together_4colors_func(idxs(i), [1 3 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
+    plot_together_3colors_func(idxs(i), [1 3 5], [1:10], all_medians, color1, color2, color3,  start, finish, 1)
     title(num2str(idxs(i)));
     
     %Points to Remove
@@ -2830,7 +2843,7 @@ if savefile
     
     if first_time
         fname_save_settings=[main_dir monkey '/Color_Tracking/' date '/Markers/settings_' monkey '_' date2];
-        save(fname_save_settings,'red_elbow_dist_from_blue','red_blue_arm_dist_max','red_arm_thresh1','red_arm_thresh2',...
+        save(fname_save_settings,'red_elbow_dist_from_blue','red_blue_arm_dist_max',...
         'green_hand_dists_elbow','red_hand_dists_elbow','blue_hand_dists_elbow','green_separator',...
         'green_hand_dists_bluearm','red_hand_dists_bluearm','blue_hand_dists_bluearm',...
         'green_hand_dists_redarm', 'red_hand_dists_redarm', 'blue_hand_dists_redarm',...

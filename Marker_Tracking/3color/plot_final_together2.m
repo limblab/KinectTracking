@@ -1,16 +1,17 @@
 %% Align
+%Only run this section if you haven't aligned the data already within
+%"color_tracker_3colors"
 
 all_medians_aligned=NaN(11,3,finish);
-
 all_medians_aligned(:,:,start:finish)=all_medians;
 
 
 %% Set things
-markers=[7 9 10];%1:11;
-pause_manually=1;
-plot_original=1;
-start_frame=2625+start-1;
-finish=n;
+markers=1:10;
+pause_manually=0;
+plot_original=0;
+start_frame=5000;%start;
+finish=6000;%3000;
 
 %% Plot
 
