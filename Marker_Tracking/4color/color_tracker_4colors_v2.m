@@ -40,21 +40,22 @@
 %% Input File to Load
 
 %File to load
-main_dir='/Users/jig289/Box Sync/Tracking_Data/';
+main_dir='C:\Users\rhc307\Projects\limblab\data-raeed\BumpCurl\Han\20170206\preCDS';
 monkey='Han';
-date='03-17-16'; %mo-day-yr
-exp='RW_PM';
-num='002';
+date='02-06-16'; %mo-day-yr
+exp='CObumpcurl';
+num='003';
+file_name = 'Han_20170206_CObumpcurl_adaptation_colorTracking_003';
 
 % Load ColorTracking File and Settings
-fname_load=ls([main_dir monkey '/Color_Tracking/' date '/Tracking/color_tracking ' exp '_' num '*']);
+fname_load=ls([main_dir '/ColorTracking/' file_name '*']);
 load(deblank(fname_load))
 
 % Rename data from loaded file (if it's in the new format)
 if exist('color_coords_allframes','var')
-    color1=color_coords_allframes(:,1)';
+    color1=color_coords_allframes(:,3)'; % Marker colors 1 and 3 were switched in python script at some point
     color2=color_coords_allframes(:,2)';
-    color3=color_coords_allframes(:,3)';
+    color3=color_coords_allframes(:,1)';
     color4=color_coords_allframes(:,4)';
 end
 
@@ -64,16 +65,16 @@ end
 savefile=1;
 
 %Use all default values for constraints (mostly for distances between markers)
-use_defaults=1;
+use_defaults=0;
 
 %If this is the first file from a date, set equal to 1 (there are more initializations)
 %Also, if you have use_defaults=1, set this equal to 1
-first_time=1;
+first_time=0;
 
 %Load all of the settings if it's not the first file
 if ~first_time
     date2=['20' num2str(date(7:8)) num2str(date(1:2)) num2str(date(4:5))];
-    fname_load_settings=[main_dir monkey '/Color_Tracking/' date '/Markers/settings_' monkey '_' date2];
+    fname_load_settings=[main_dir '/Color_Tracking/Markers/settings_' monkey '_' date2];
     load(fname_load_settings);
 end
 
@@ -254,25 +255,25 @@ end
 %If you'd prefer to type in the initial marker locations ahead of time, you
 %can do it here. You can get them from orioginal_colos_plot_4colors
 
-if marker_init_manual
-    marker_inits=NaN(11,3);
-    marker_inits(1,:)=[1.12,.04,-.14];
-    marker_inits(2,:)=[1.13,.06,-.13];
-    marker_inits(3,:)=[1.12,.06,-.15];
-    marker_inits(4,:)=[1.13,.09,-.13];
-    marker_inits(5,:)=[1.13,.09,-.15];
-    marker_inits(6,:)=[1.09,.26,-.06];
-    marker_inits(7,:)=[1.09,.28,-.11];
-    marker_inits(8,:)=[1.09,.31,-.02];
-    marker_inits(9,:)=[1.12,.36,.04];
-    marker_inits(10,:)=[1.10,.25,-.10];
-    
-    %I plot z,x,y (instead of x,y,z), so I input z,x,y above. Here, switch to x,y,z
-    marker_inits_temp=marker_inits;
-    marker_inits(:,1)=marker_inits_temp(:,2);
-    marker_inits(:,2)=marker_inits_temp(:,3);
-    marker_inits(:,3)=marker_inits_temp(:,1);
-end
+% if marker_init_manual
+%     marker_inits=NaN(11,3);
+%     marker_inits(1,:)=[1.12,.04,-.14];
+%     marker_inits(2,:)=[1.13,.06,-.13];
+%     marker_inits(3,:)=[1.12,.06,-.15];
+%     marker_inits(4,:)=[1.13,.09,-.13];
+%     marker_inits(5,:)=[1.13,.09,-.15];
+%     marker_inits(6,:)=[1.09,.26,-.06];
+%     marker_inits(7,:)=[1.09,.28,-.11];
+%     marker_inits(8,:)=[1.09,.31,-.02];
+%     marker_inits(9,:)=[1.12,.36,.04];
+%     marker_inits(10,:)=[1.10,.25,-.10];
+%     
+%     %I plot z,x,y (instead of x,y,z), so I input z,x,y above. Here, switch to x,y,z
+%     marker_inits_temp=marker_inits;
+%     marker_inits(:,1)=marker_inits_temp(:,2);
+%     marker_inits(:,2)=marker_inits_temp(:,3);
+%     marker_inits(:,3)=marker_inits_temp(:,1);
+% end
 
 
 
@@ -2397,11 +2398,11 @@ all_medians2(:,:,start:finish)=temp2;
 %% Save
 if savefile
     date2=['20' num2str(date(7:8)) num2str(date(1:2)) num2str(date(4:5))];
-    fname_save=[main_dir monkey '/Color_Tracking/' date '/Markers/markers_' monkey '_' date2 '_' exp '_' num];
+    fname_save=[main_dir '/ColorTracking/Markers/markers_' monkey '_' date2 '_' exp '_' num];
     save(fname_save,'all_medians','all_medians2','led_vals','times');
     
     if first_time
-        fname_save_settings=[main_dir monkey '/Color_Tracking/' date '/Markers/settings_' monkey '_' date2];
+        fname_save_settings=[main_dir '/ColorTracking/Markers/settings_' monkey '_' date2];
         save(fname_save_settings,'red_elbow_dist_from_blue','red_blue_arm_dist_max',...
             'green_hand_dists_elbow','red_hand_dists_elbow','blue_hand_dists_elbow','yellow_hand_dists_elbow','green_separator',...
             'green_hand_dists_bluearm','red_hand_dists_bluearm','blue_hand_dists_bluearm','yellow_hand_dists_bluearm',...
