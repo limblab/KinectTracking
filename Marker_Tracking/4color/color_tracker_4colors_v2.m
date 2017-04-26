@@ -40,12 +40,13 @@
 %% Input File to Load
 
 %File to load
-main_dir='C:\Users\rhc307\Projects\limblab\data-raeed\BumpCurl\Han\20170206\preCDS';
+main_dir='C:\Users\rhc307\Projects\limblab\data-raeed\ForceKin\Han\20170203';
 monkey='Han';
-date='02-06-16'; %mo-day-yr
-exp='CObumpcurl';
-num='003';
-file_name = 'Han_20170206_CObumpcurl_adaptation_colorTracking_003';
+date='20170203'; %mo-day-yr
+exp='COactpas';
+num='001';
+% file_name = 'Han_20170206_CObumpcurl_adaptation_colorTracking_003';
+file_name = [monkey '_' date '_' exp '_colorTracking_' num];
 
 % Load ColorTracking File and Settings
 fname_load=ls([main_dir '/ColorTracking/' file_name '*']);
@@ -69,7 +70,7 @@ use_defaults=0;
 
 %If this is the first file from a date, set equal to 1 (there are more initializations)
 %Also, if you have use_defaults=1, set this equal to 1
-first_time=0;
+first_time=1;
 
 %Load all of the settings if it's not the first file
 if ~first_time
@@ -1864,10 +1865,10 @@ for i=1:length(idxs)
     switches=input([str2 str3]);
     %Make sure entry is valid (either empty, or composed of markers)
     while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
-        rmv=input('Enter valid point(s)');
+        switches=input('Enter valid point(s)');
     end
     for j=1:size(switches,1)
-        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+        [ all_medians, all_medians2 ] = switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
     end
 end
 
@@ -1914,10 +1915,10 @@ for i=1:length(idxs)
     switches=input([str2 str3]);
     %Make sure entry is valid (either empty, or composed of markers)
     while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
-        rmv=input('Enter valid point(s)');
+        switches=input('Enter valid point(s)');
     end
     for j=1:size(switches,1)
-        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+        [ all_medians, all_medians2 ] = switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
     end
 end
 
@@ -1965,10 +1966,10 @@ for i=1:length(idxs)
     switches=input([str2 str3]);
     %Make sure entry is valid (either empty, or composed of markers)
     while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
-        rmv=input('Enter valid point(s)');
+        switches=input('Enter valid point(s)');
     end
     for j=1:size(switches,1)
-        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+        [ all_medians, all_medians2 ] = switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
     end
 end
 
@@ -2015,10 +2016,10 @@ for i=1:length(idxs)
     switches=input([str2 str3]);
     %Make sure entry is valid (either empty, or composed of markers)
     while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
-        rmv=input('Enter valid point(s)');
+        switches=input('Enter valid point(s)');
     end
     for j=1:size(switches,1)
-        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+        [ all_medians, all_medians2 ] = switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
     end
 end
 
@@ -2064,10 +2065,10 @@ for i=1:length(idxs)
     switches=input([str2 str3]);
     %Make sure entry is valid (either empty, or composed of markers)
     while ~(isempty(switches) || (all(all(mod(switches,1)==0)) && all(all(switches>0)) && all(all(switches<=size(all_medians,1)))))
-        rmv=input('Enter valid point(s)');
+        switches=input('Enter valid point(s)');
     end
     for j=1:size(switches,1)
-        switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
+        [ all_medians, all_medians2 ] = switch_pts(switches(j,:),idxs(i),all_medians,all_medians2);
     end
 end
 
@@ -2397,12 +2398,11 @@ all_medians2(:,:,start:finish)=temp2;
 
 %% Save
 if savefile
-    date2=['20' num2str(date(7:8)) num2str(date(1:2)) num2str(date(4:5))];
-    fname_save=[main_dir '/ColorTracking/Markers/markers_' monkey '_' date2 '_' exp '_' num];
+    fname_save=[main_dir '\ColorTracking\Markers\markers_' monkey '_' date '_' exp '_' num];
     save(fname_save,'all_medians','all_medians2','led_vals','times');
     
     if first_time
-        fname_save_settings=[main_dir '/ColorTracking/Markers/settings_' monkey '_' date2];
+        fname_save_settings=[main_dir '\ColorTracking\Markers\settings_' monkey '_' date];
         save(fname_save_settings,'red_elbow_dist_from_blue','red_blue_arm_dist_max',...
             'green_hand_dists_elbow','red_hand_dists_elbow','blue_hand_dists_elbow','yellow_hand_dists_elbow','green_separator',...
             'green_hand_dists_bluearm','red_hand_dists_bluearm','blue_hand_dists_bluearm','yellow_hand_dists_bluearm',...
