@@ -54,7 +54,7 @@ else
     load([folder prefix '_kinect_rotation.mat']);
 end
 
-4d. Perform Translation and Rotation on the kinect data
+%% 4d. Perform Translation and Rotation on the kinect data
 if ~rotation_known
     plot_flag=1;
     [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost, plot_flag, times_good, pos_h, colors_xy );
@@ -70,7 +70,7 @@ clear Tpost
 clear plot_flag
 clear rotation_known
 
-5. SMOOTH OUT MARKERS
+%% 5. SMOOTH OUT MARKERS
 kinect_pos_smooth=NaN(size(kinect_pos));
 for i=1:10
     for j=1:3
@@ -81,9 +81,9 @@ end
 
 clear temp
 
-5. FIND TIMES TO EXCLUDE (BECAUSE THE MONKEY THREW AWAY THE HANDLE)
+%% 5. FIND TIMES TO EXCLUDE (BECAUSE THE MONKEY THREW AWAY THE HANDLE)
 
-5a. Calculate the distances of the hand marker to the handle (and plot)
+%% 5a. Calculate the distances of the hand marker to the handle (and plot)
 %This can be used to determine times when the monkey has thrown away the
 %handle
 
@@ -107,7 +107,7 @@ clear n_times
 clear h
 clear k
 
-6. PUT KINECT DATA INTO OPENSIM COORDINATES
+%% 6. PUT KINECT DATA INTO OPENSIM COORDINATES
 % Robot coordinates:
 % Origin at shoulder joint center of robot, x is to right, y is towards screen, z is up
 % OpenSim coordinates:
@@ -248,9 +248,9 @@ for i=1:length(good_frame)
     end
 end
 
-7. PUT KINECT DATA INTO BDF
+%% 7. PUT KINECT DATA INTO BDF
 
-8. PUT KINECT MOTION TRACKING DATA INTO TRC FORMAT
+%% 8. PUT KINECT MOTION TRACKING DATA INTO TRC FORMAT
 % find meta data
 frame_rate = 1/mean(diff(kinect_times));
 num_markers = 10; % ONLY USED 10 MARKERS FOR CHIPS DATA
@@ -297,7 +297,7 @@ end
 fclose(fid);
 clear fid
 
-9. PUT TARGET DATA INTO TRC FORMAT
+%% 9. PUT TARGET DATA INTO TRC FORMAT
 % find meta data
 frame_rate = 1/mean(diff(kinect_times));
 start_idx = find(kinect_times>=0,1,'first');
