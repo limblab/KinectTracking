@@ -1,4 +1,4 @@
-function [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost, plot_flag, times_good, pos_h, colors_xy )
+function [ kinect_pos ] = do_translation_rotation( all_medians, alignment_settings, plot_flag, times_good, pos_h, colors_xy )
 
 %Puts the kinect markers into handle coordinates
 
@@ -17,12 +17,16 @@ function [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost, 
 
 %% Deal with number of inputs
 
-if nargin<9 %The final parameters are only for plotting
+if nargin<7 %The final parameters are only for plotting
     plot_flag=0;
 end
 
 
 %% Put all kinect positions in handle coordinates
+
+R = alignment_settings.R;
+Tpre = alignment_settings.Tpre;
+Tpost = alignment_settings.Tpost;
 
 %Rename kinect positions
 all_medians_v2=all_medians;

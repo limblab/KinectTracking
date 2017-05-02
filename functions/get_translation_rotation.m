@@ -1,10 +1,10 @@
-function [ R, Tpre, Tpost, times_good, pos_h, colors_xy ] = get_translation_rotation( bdf, kinect_times, all_medians, x_lim_handle, y_lim_handle, plot_flag )
+function [ alignment_settings, times_good, pos_h, colors_xy ] = get_translation_rotation( cds, kinect_times, all_medians, x_lim_handle, y_lim_handle, plot_flag )
 
 %This function finds the translation and rotation that are necessary for
 %converting the kinect markers into handle coordinates
 
 %Inputs:
-%bdf - cerebus file that contains handle information
+%cds - cerebus file that contains handle information
 %all_medians - kinect marker locations
 %x_lim_handle, y_lim_handle - locations of handle to consider
 %plot_flag - whether to plot the results
@@ -20,8 +20,8 @@ function [ R, Tpre, Tpost, times_good, pos_h, colors_xy ] = get_translation_rota
 
 %% 4a. Get handle information
 
-handle_pos = bdf.pos(:,2:3);
-handle_times = bdf.pos(:,1); %This should be the same as analog_ts
+handle_pos = [cds.kin.x cds.kin.y];
+handle_times = cds.kin.t; %This should be the same as analog_ts
 
 %% Get the handle times that correspond to the kinect times
 
@@ -96,6 +96,8 @@ pos_h_shift=pos_h-repmat(mean(pos_h),[size(pos_h,1),1]);
 Tpre=mean(pos_k); %The shift that was needed of the kinect positions prior to rotation
 Tpost=mean(pos_h); %The shift that is needed after rotation to put back into handle coordinates
 Tpost(3)=0; %Assume handle is at z=0
+
+alignment_settings = struct('R',R,'Tpre',Tpre,'Tpost',Tpost);
 
 %% Plot to make sure it worked
 

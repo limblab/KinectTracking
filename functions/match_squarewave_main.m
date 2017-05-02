@@ -1,4 +1,4 @@
-function [ kinect_times ] = match_squarewave_main( bdf, led_vals, times, kinect_start_guess, plot_flag)
+function [ kinect_times ] = match_squarewave_main( cerebus_vals, led_vals, times, kinect_start_guess, plot_flag)
 
 %This function gets information about the cerebus squarewave, uses
 %"match_squarewave_func" to find the timeshift between the kinect LED
@@ -6,11 +6,13 @@ function [ kinect_times ] = match_squarewave_main( bdf, led_vals, times, kinect_
 
 %% Get information about Cerebus Squarewave
 
-analog_ts = bdf.analog.ts';
+% analog_ts = bdf.analog.ts';
+analog_ts = cerebus_vals.t;
 
 % find KinectSyncPulse signal
-pulse_idx = strcmp(bdf.analog.channel,'KinectSyncPulse');
-KinectSyncPulse = bdf.analog.data(:,pulse_idx);
+% pulse_idx = strcmp(bdf.analog.channel,'KinectSyncPulse');
+% KinectSyncPulse = bdf.analog.data(:,pulse_idx);
+KinectSyncPulse = cerebus_vals.KinectSyncPulse;
 
 %Clean up the squarewave
 KinectSquare=KinectSyncPulse>2000;
