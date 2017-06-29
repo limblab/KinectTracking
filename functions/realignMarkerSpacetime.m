@@ -70,7 +70,8 @@ if ~rotation_known
     
     % find alignment
     plot_flag=1;
-    [ alignment_settings, times_good, pos_h, colors_xy ] = get_translation_rotation( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
+    [ affine_xform, times_good, pos_h, colors_xy ] = get_affine_xform( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
+%     [ alignment_settings, times_good, pos_h, colors_xy ] = get_translation_rotation( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
     %Save a file w/ T and R, so it can be used for other files from the
     %same day
 %     save([folder prefix '_kinect_rotation.mat'],'R','Tpre','Tpost')
