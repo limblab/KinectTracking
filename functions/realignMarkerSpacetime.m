@@ -30,14 +30,14 @@
 % Written by Raeed Chowdhury and Joshua Glaser. Updated April 2017.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [marker_data_aligned,alignment_settings] = realignMarkerSpacetime(cds,marker_data,varargin)
+function [marker_data_aligned,affine_xform] = realignMarkerSpacetime(cds,marker_data,varargin)
 
 % figure out if rotation known
 if nargin>3
     error('Too many arguments')
 elseif nargin==3
     rotation_known = true;
-    alignment_settings = varargin{1};
+    affine_xform = varargin{1};
 else
     rotation_known = false;
 end
@@ -70,25 +70,12 @@ if ~rotation_known
     
     % find alignment
     plot_flag=1;
-    [ affine_xform, times_good, pos_h, colors_xy ] = get_affine_xform( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
-%     [ alignment_settings, times_good, pos_h, colors_xy ] = get_translation_rotation( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
-    %Save a file w/ T and R, so it can be used for other files from the
+    [ affine_xform ] = get_affine_xform( cds, kinect_times, marker_data.all_medians, x_lim_handle, y_lim_handle, plot_flag );
+    %Save a file w/ affine_xform, so it can be used for other files from the
     %same day
-%     save([folder prefix '_kinect_rotation.mat'],'R','Tpre','Tpost')
     
-% else
-%     %Else load a file that has T and R
-%     load([folder prefix '_kinect_rotation.mat']);
 end
 
-% 4d. Perform Translation and Rotation on the kinect data
-% if ~rotation_known
-%     plot_flag=1;
-%     [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost, plot_flag, times_good, pos_h, colors_xy );
-% end
-
-% if rotation_known
-    [ kinect_pos ] = do_translation_rotation( marker_data.all_medians, alignment_settings);
-% end
+[ kinect_pos ] = do_affine_xform( marker_data.all_medians, affine_xform, plot_flag);
 
 marker_data_aligned = struct('pos',kinect_pos,'t',kinect_times);

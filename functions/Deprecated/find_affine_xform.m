@@ -5,7 +5,7 @@ function affine_xform = find_affine_xform(pos_k,pos_h)
 % where p and p_prime are in homogenous coordinates
 % [p1; p2; p3; 1]
 % and A is a 3D (4x4)
-% affine matrix
+% affine transformation matrix
 % [a11 a12 a13 a14;
 %  a21 a22 a23 a24;
 %  a31 a32 a33 a34;

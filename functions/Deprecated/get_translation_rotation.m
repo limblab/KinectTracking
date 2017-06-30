@@ -1,4 +1,4 @@
-function [ affine_xform ] = get_affine_xform( cds, kinect_times, all_medians, x_lim_handle, y_lim_handle, plot_flag )
+function [ alignment_settings, times_good, pos_h, colors_xy ] = get_translation_rotation( cds, kinect_times, all_medians, x_lim_handle, y_lim_handle, plot_flag )
 
 %This function finds the translation and rotation that are necessary for
 %converting the kinect markers into handle coordinates
@@ -10,7 +10,10 @@ function [ affine_xform ] = get_affine_xform( cds, kinect_times, all_medians, x_
 %plot_flag - whether to plot the results
 
 %Outputs:
-% affine transformation matrix
+%R - rotation matrix (to rotate the kinect positions)
+%Tpre - translation of the kinect needed prior to rotation
+%Tpost - translation of the kinect needed after rotation (to put back in
+%handle coordinates)
 
 %Note that the output times_good, pos_h, colors_xy, are all just
 %used for making sure this works (via a plot). These can later be removed
@@ -82,19 +85,19 @@ pos_k(:,1)=-pos_k(:,1);
 %Kinect is in meters, while handle is in cm: put everything in cm
 pos_k=pos_k*100;
 
-%Find the rotation with Kabsch algorithm
-[U,r,lrms] = Kabsch(pos_k',pos_h');
+%Make mean of the kinect and handle positions zero (in order to be able to
+%match them up via a rotation).
+pos_k_shift=pos_k-repmat(mean(pos_k),[size(pos_k,1),1]);
+pos_h_shift=pos_h-repmat(mean(pos_h),[size(pos_h,1),1]);
 
-disp(['The rms for aligning kinect hand position to handle is ' num2str(lrms) ' cm'])
+%Find the rotation that
+[ pos_k_shift_rotate, R, q, fmin ] = rotate_match_func2( pos_k_shift, pos_h_shift );
 
-%compute affine transform
-affine_xform = [U r; 0 0 0 1];
+Tpre=mean(pos_k); %The shift that was needed of the kinect positions prior to rotation
+Tpost=mean(pos_h); %The shift that is needed after rotation to put back into handle coordinates
+Tpost(3)=0; %Assume handle is at z=0
 
-%% Apply
-pos_k_affine = [pos_k ones(size(pos_k,1),1)] * affine_xform';
-% pos_k_affine = pos_k * affine_xform(1:3,1:3)';
-% pos_k_affine = pos_k;
-% pos_h_affine = [pos_h ones(size(pos_h,1),1)] / affine_xform';
+alignment_settings = struct('R',R,'Tpre',Tpre,'Tpost',Tpost);
 
 %% Plot to make sure it worked
 
@@ -107,18 +110,15 @@ if plot_flag
     
     %Plot the kinect points that have been rotated (with coloring based on where
     %the handles initially were)
-    figure; scatter3(pos_k_affine(:,1),pos_k_affine(:,2),pos_k_affine(:,3),[],colors_xy,'fill')
+    figure; scatter3(pos_k_shift_rotate(:,1),pos_k_shift_rotate(:,2),pos_k_shift_rotate(:,3),[],colors_xy,'fill')
     title('Kinect')
-    axis equal
-%     xlim(x_lim_handle);
-%     ylim(y_lim_handle);
-%     zlim([-15 15]);
+    xlim([-15 15]);
+    ylim([-15 15]);
+    zlim([-15 15]);
     
     %Plot the handle points
-    figure; scatter3(pos_h(:,1),pos_h(:,2),pos_h(:,3),[],colors_xy,'fill')
-%     figure; scatter3(pos_h_affine(:,1),pos_h_affine(:,2),pos_h_affine(:,3),[],colors_xy,'fill')
+    figure; scatter3(pos_h_shift(:,1),pos_h_shift(:,2),pos_h_shift(:,3),[],colors_xy,'fill')
     title('Handle')
-    axis equal
     
 end
 
