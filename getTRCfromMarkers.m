@@ -30,60 +30,9 @@ function getTRCfromMarkers(cds,marker_data)
 
 %% 4. PUT KINECT MARKER LOCATIONS IN HANDLE COORDINATES
 % rotation_known=0; %Whether the rotation matrix is already known (from another file from that day)
-% 
-% % 4a. Plot handle to determine some points to remove
-% %We want to remove the time points when the monkey has thrown away the
-% %handle, since then the hand won't be at the same position as the handle
-% if ~rotation_known
-%     figure; scatter(cds.kin.x(1:10:end),cds.kin.y(1:10:end))
-%     %Note- this plot can be removed if the limits (below) are always the same
-%     
-%     str2='Type in the handle limits on the x-axis \n';
-%     str3='e.g. [-10,10] (default is [-15,15]) \n';
-%     x_lim_handle=input([str2 str3]);
-%     
-%     if isempty(x_lim_handle)
-%         x_lim_handle=[-15,15]; %x limits (min and max)
-%     end
-%     
-%     str2='Type in the handle limits on the y-axis \n';
-%     str3='e.g. [-10,10] (default is [-45,-22]) \n';
-%     y_lim_handle=input([str2 str3]);
-% 
-%     if isempty(x_lim_handle)
-%         y_lim_handle=[-45,-22]; %y limits (min and max)
-%     end
-% end
-% 
-% % 4c. Get Translation and Rotation
-% if ~rotation_known
-%     plot_flag=1;
-%     [ R, Tpre, Tpost, times_good, pos_h, colors_xy ] = get_translation_rotation( bdf, kinect_times, all_medians, x_lim_handle, y_lim_handle, plot_flag );
-%     %Save a file w/ T and R, so it can be used for other files from the
-%     %same day
-%     save([folder prefix '_kinect_rotation.mat'],'R','Tpre','Tpost')
-% else
-%     %Else load a file that has T and R
-%     load([folder prefix '_kinect_rotation.mat']);
-% end
-% 
-% % 4d. Perform Translation and Rotation on the kinect data
-% if ~rotation_known
-%     plot_flag=1;
-%     [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost, plot_flag, times_good, pos_h, colors_xy );
-% end
-% 
-% if rotation_known
-%     [ kinect_pos ] = do_translation_rotation( all_medians, R, Tpre, Tpost);
-% end
-% 
-% clear R
-% clear Tpre
-% clear Tpost
-% clear plot_flag
-% clear rotation_known
 
-[md,alignement_settings] = realignMarkerSpacetime(cds,marker_data);
+% first file of the day, affine xform unknown
+[md,affine_xform] = realignMarkerSpacetime(cds,marker_data);
 pause;
 
 %% 5. SMOOTH OUT MARKERS
