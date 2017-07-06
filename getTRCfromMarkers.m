@@ -268,8 +268,8 @@ md = smoothMarkerData(md);
 % clear fid
 
 % need to change save files to be more generic later
-writeToTRC(md,'C:\Users\rhc307\Projects\limblab\data-raeed\ForceKin\Han\20170203\OpenSim\Han_20170203_COactpas_markerData_001.trc')
-writeHandleForceOpenSim(md,cds,handle_opensim,'C:\Users\rhc307\Projects\limblab\data-raeed\ForceKin\Han\20170203\OpenSim\Han_20170203_COactpas_grf_001.mot')
+writeToTRC(md,'C:\Users\rhc307\Projects\limblab\data-preproc\MultiWorkspace\FullWS\Han\leftS1\20160315\OpenSim\Han_20160315_RW_markerData_001.trc')
+writeHandleForceOpenSim(md,cds,handle_opensim,'C:\Users\rhc307\Projects\limblab\data-preproc\MultiWorkspace\FullWS\Han\leftS1\20160315\OpenSim\Han_20160315_RW_grf_001.mot')
 
 %% 9. PUT TARGET DATA INTO TRC FORMAT
 % % find meta data
