@@ -1,0 +1,85 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Vim editor things #
+#####################
+*.un~
+*~
+*.swp
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Image formats
+# Keep out possible sensitive images
+*.jpg
+*.png
+*.tif
+*.TIFF
+*.bmp
+*.fig
+*.eps
+*.pdf
+*.ppt
+*.pptx
+*.doc
+*.docx
+
+# Video formats
+*.avi
+*.mp4
+*.mov
+
+# Data files
+*.nev
+*.ns2
+*.ns3
+*.ns4
+*.ns5
+*.ccf
+*.plx
+*.pl2
+*.plo
+
+# Matlab things
+*.asv
+*.mat
+
+*.m~
