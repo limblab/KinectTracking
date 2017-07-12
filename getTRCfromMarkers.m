@@ -1,10 +1,9 @@
 function getTRCfromMarkers(cds,marker_data,saveFolder)
-%3. align times (based on led square wave)
-%4. put kinect marker locations in handle coordinates
-%   -if this is the first file from the day, find the rotation matrix and then use it
-%   -if not, just use the rotation matrix found from another file from the day
-
-%Output will be all the markers in handle coordinates, and in cerebus time
+% Given a cds, marker data from color tracking, and a save location, will
+% spatiotemporally align the markers to the data in the CDS, smooth the
+% markers, transform the coordinates for use in OpenSim, and write out a
+% TRC file for the marker locations and a MOT file for the GRF from the
+% handle interaction force into the save folder.
 
 
 %% 4. PUT KINECT MARKER LOCATIONS IN HANDLE COORDINATES
