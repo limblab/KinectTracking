@@ -1,4 +1,4 @@
-function getTRCfromMarkers(cds,marker_data)
+function getTRCfromMarkers(cds,marker_data,saveFolder)
 %3. align times (based on led square wave)
 %4. put kinect marker locations in handle coordinates
 %   -if this is the first file from the day, find the rotation matrix and then use it
@@ -12,7 +12,6 @@ function getTRCfromMarkers(cds,marker_data)
 
 % first file of the day, affine xform unknown
 [md,affine_xform] = realignMarkerSpacetime(cds,marker_data);
-pause;
 
 %% 5. SMOOTH OUT MARKERS
 
@@ -48,10 +47,14 @@ md = smoothMarkerData(md);
 
 [md,handle_opensim] = transformForOpenSim(md,cds);
 
-%% 7. FIND BAD HAND FRAMES
-% need to change save files to be more generic later
-writeToTRC(md,'C:\Users\rhc307\Projects\limblab\data-preproc\MultiWorkspace\FullWS\Han\leftS1\20160315\OpenSim\Han_20160315_RW_markerData_001.trc')
-writeHandleForceOpenSim(md,cds,handle_opensim,'C:\Users\rhc307\Projects\limblab\data-preproc\MultiWorkspace\FullWS\Han\leftS1\20160315\OpenSim\Han_20160315_RW_grf_001.mot')
+%% 7. Save TRC and GRF files
+
+prefix=cds.meta.rawFileName;
+if ~iscell(prefix)
+    prefix={prefix};
+end
+writeToTRC(md,[saveFolder prefix{1} '_markerData.trc'])
+writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_grf.mot'])
 
 %% 9. PUT TARGET DATA INTO TRC FORMAT
 % % find meta data
