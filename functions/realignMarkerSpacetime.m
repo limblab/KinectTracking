@@ -43,7 +43,20 @@ else
 end
 
 % First time align based on square wave
-kinect_times = realignMarkerTimes(cds.analog{1},marker_data,true);
+% First find the right analog cell
+pulse_idx = 0;
+for i=1:length(cds.analog)
+    header = cds.analog{i}.Properties.VariableNames;
+    if any(strcmp(header,'KinectSyncPulse'))
+        pulse_idx = i;
+        break
+    end
+end
+if pulse_idx > 0
+    kinect_times = realignMarkerTimes(cds.analog{pulse_idx},marker_data,true);
+else
+    error('realignMarkerSpacetime:missing pulse','LED pulse data is missing from CDS')
+end
 
 % 4a. Plot handle to determine some points to remove
 %We want to remove the time points when the monkey has thrown away the

@@ -1,4 +1,4 @@
-function getTRCfromMarkers(cds,marker_data,saveFolder)
+function affine_xform = getTRCfromMarkers(cds,marker_data,saveFolder,varargin)
 % Given a cds, marker data from color tracking, and a save location, will
 % spatiotemporally align the markers to the data in the CDS, smooth the
 % markers, transform the coordinates for use in OpenSim, and write out a
@@ -8,9 +8,17 @@ function getTRCfromMarkers(cds,marker_data,saveFolder)
 
 %% 4. PUT KINECT MARKER LOCATIONS IN HANDLE COORDINATES
 % rotation_known=0; %Whether the rotation matrix is already known (from another file from that day)
+% figure out if rotation known
+if nargin>4
+    error('Too many arguments')
+elseif nargin==4
+    affine_xform = varargin{1};
+    [md,affine_xform] = realignMarkerSpacetime(cds,marker_data,affine_xform);
+else
+    % first file of the day, affine xform unknown
+    [md,affine_xform] = realignMarkerSpacetime(cds,marker_data);
+end
 
-% first file of the day, affine xform unknown
-[md,affine_xform] = realignMarkerSpacetime(cds,marker_data);
 
 %% 5. SMOOTH OUT MARKERS
 
@@ -51,6 +59,9 @@ md = smoothMarkerData(md);
 prefix=cds.meta.rawFileName;
 if ~iscell(prefix)
     prefix={prefix};
+end
+if saveFolder(end) ~= filesep
+    saveFolder = [saveFolder filesep];
 end
 writeToTRC(md,[saveFolder prefix{1} '_markerData.trc'])
 writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_grf.mot'])
