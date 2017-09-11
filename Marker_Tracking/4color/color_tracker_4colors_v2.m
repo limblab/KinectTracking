@@ -60,14 +60,6 @@ if exist('color_coords_allframes','var')
     color3=color_coords_allframes(:,1)';
     color4=color_coords_allframes(:,4)';
 end
-xWin = [-.15,-.11];
-yWin = [-.15,-.11];
-zWin = [.63,.69];
-indices = 1:45749;
-
-color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
-
-color2= removeWindow(color2, indices, [.65, .75],[-.2,-.1], [-.15, -.05]);
 
 %% User Options / Initializations
 
@@ -449,6 +441,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
             if ~isempty(user_input)
                 while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
                     user_input=input('Re-enter valid time point \n');
+                    user_input = [];
                 end
             end
             if ~isempty(user_input)
@@ -484,7 +477,7 @@ end
 %% Red Arm (Redo)
 %Note that this is different from the previous version of "Red Arm" because
 %now there are constraints involving distance from the blue arm marker
-
+close all
 %Initializations
 plot_on=0;
 marker_ids=red_arm_marker_ids;
@@ -553,7 +546,7 @@ all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
 %% Remove faulty red elbow points
-
+close all
 %This calculates (and plots) the angle made by points 7,8,10
 %Problems with the red elbow marker (point 10) will make this angle wrong
 %We will remove those points
@@ -618,9 +611,9 @@ end
 %Remove red elbow points (based on angle)
 rmv10=angle<red_elbow_angle_thresh;
 all_medians(10,:,rmv10)=NaN;
-close all
-%% Green Shoulder
 
+%% Green Shoulder
+close all
 if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a green shoulder marker
     %Initializations
     plot_on=0;
@@ -742,7 +735,7 @@ all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
 %% Remove faulty green elbow points
-
+close all
 %This calculates (and plots) the angle made by points 7,8,6
 %Problems with the green elbow marker (point 6) will make this angle wrong
 %We will remove those points
@@ -806,7 +799,7 @@ all_medians(6,:,rmv6)=NaN;
 
 
 %% 4. PRELIMINARY TRACKING OF HAND MARKERS (IN ORDER TO SET DISTANCE CONSTRAINTS TO ARM MARKERS)
-
+close all
 %% Red Hand (Preliminary)
 if first_time %If this is not the first file from a date, we don't need to run this.
     
@@ -874,6 +867,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
 end
 
 %% Yellow Hand (Preliminary)
+close all
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -940,6 +934,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
 end
 
 %% Green Hand (Preliminary)
+close all
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -1007,6 +1002,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
 end
 
 %% Blue Hand (Preliminary)
+close all
 if first_time %If this is not the first file from a date, we don't need to run this.
     
     %Initializations
@@ -1074,7 +1070,7 @@ end
 %% 5. SET DISTANCE CONSTRAINTS OF HAND MARKERS TO ARM MARKERS
 
 %% Set distance limits of hand markers to red elbow marker (after plotting the distances first)
-
+close all
 %PLOT
 %Plots the distances of every hand marker to to red elbow marker in order
 %to determine what distances are allowed (for rerunning the hand marker
@@ -1196,7 +1192,7 @@ if first_time
 end
 
 %% Set distance limits of hand markers to blue arm marker (after plotting the distances first)
-
+close all
 %PLOT
 %Plots the distances of every hand marker to to blue arm marker in order
 %to determine what distances are allowed (for rerunning the hand marker
@@ -1302,7 +1298,7 @@ end
 
 %Note that using the distance from the hand to the red arm marker only is helpful for a task with holding the handle
 
-
+close all
 if first_time
     %Calculate distances
     for i=1:n_times_prelim
@@ -1393,7 +1389,7 @@ if first_time
 end
 
 %% Set distance limits between green hand markers
-
+close all
 %Plots the distances of the green hand markers to each other, in order to
 %determine what distances are allowed (for rerunning the hand marker tracking)
 
@@ -1444,7 +1440,7 @@ end
 %% 6. TRACK HAND MARKERS (USING DISTANCE CONSTRAINTS FROM ABOVE), EXCEPT YELLOW
 
 %% Green Hand (Redo)
-
+close all
 %Initializations
 plot_on=0;
 marker_ids=green_hand_marker_ids;
@@ -1632,7 +1628,7 @@ all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
 %% Blue Hand (Redo)
-
+close all
 %Initializations
 plot_on=0;
 marker_ids=blue_hand_marker_ids;
@@ -1723,7 +1719,7 @@ all_medians(marker_ids,:,:)=medians;
 all_medians2(marker_ids,:,:)=medians2;
 
 %% Red Hand (Redo)
-
+close all
 %Initializations
 plot_on=0;
 marker_ids=red_hand_marker_ids;
@@ -1817,7 +1813,7 @@ all_medians2(marker_ids,:,:)=medians2;
 %% 7. MANUAL CORRECTION OF HAND MARKERS (REMOVING/SWITCHING) FOR FRAMES THAT GET AUTOMATICALLY FLAGGED
 
 %% Calculate hand distances from red elbow marker
-
+close all
 %Initialize some vectors that I use later for calculating the distance
 %between points
 dists1=NaN(1,n_times);
@@ -1849,7 +1845,7 @@ end
 %Find times when marker 1 and marker 5 are a similar distance to the elbow
 %marker (which is a problem)
 idxs=find(abs(dists1-dists5)<.01);
-
+close all
 %Plot those times
 for i=1:length(idxs)
     
@@ -1894,7 +1890,7 @@ if ~isempty(idxs) %Only redo if there was a change above
 end
 
 %% Make corrections when marker 3 has a larger distance to the elbow than marker 1
-
+close all
 %Find times (idxs) where the distance from the elbow to point 3 are
 %greater than the distance from the elbow to point 1 (which shouldn't
 %happen)
@@ -1945,7 +1941,7 @@ if ~isempty(idxs) %Only redo if there was a change above
 end
 
 %% Make corrections when marker 2 has a larger distance to the elbow than marker 1
-
+close all
 %Find times (idxs) where the distance from the elbow to point 2 are
 %greater than the distance from the elbow to point 1 (which shouldn't
 %happen)
@@ -1999,7 +1995,7 @@ if ~isempty(idxs) %Only redo if there was a change above
 end
 
 %% Make corrections when marker 5 has a larger distance to the elbow than marker 3
-
+close all
 
 %Find times when marker 5 has a greater distance to the elbow
 %than marker 3 (which is a problem)
@@ -2049,7 +2045,7 @@ if ~isempty(idxs) %Only redo if there was a change above
 end
 
 %% Make corrections when marker 5 has a larger distance to the elbow than marker 2
-
+close all
 %Find times when marker 5 has a greater distance to the elbow
 %than marker 3 (which is a problem)
 idxs=find(dists5>dists2);
@@ -2102,7 +2098,7 @@ end
 %% 8. TRACK YELLOW HAND MARKERS
 
 %% Yellow Hand (Redo)
-
+close all
 %Initializations
 plot_on=0;
 marker_ids=yellow_hand_marker_ids;
@@ -2201,7 +2197,7 @@ all_medians2(marker_ids,:,:)=medians2;
 %SINCE ALL THE ABOVE WAS BASED ON DISTANCE TO THE RED ELBOW)
 
 %% Remove marker 3 that is too far away from other hand markers - Automatic
-
+close all
 %Calculate distance from marker 3 to other hand markers
 for i=1:n_times
     dists4(i)=pdist2(all_medians(3,:,i),all_medians(4,:,i)); %Distance between marker 3 and marker 4...
@@ -2229,7 +2225,7 @@ rmv3=(d4 & d5 & isnan(dists2)) | (d4 & d5 & d2);
 all_medians(3,:,rmv3)=NaN;
 
 %% Remove marker 2 that is too far away from other hand markers - Automatic
-
+close all
 %Calculate distance from marker 2 to other hand markers
 for i=1:n_times
     dists3(i)=pdist2(all_medians(2,:,i),all_medians(3,:,i)); %Distances from marker 2 to 3...
@@ -2278,7 +2274,7 @@ for i=1:n_times
     dists5(i)=pdist2(all_medians2(9,:,i),all_medians(5,:,i));
 end
 
-
+close all
 
 
 if first_time
@@ -2375,7 +2371,7 @@ all_medians(5,:,rmv5)=NaN;
 %If the marker is present at a given time, set all_medians2=all_medians
 %If the marker isn't present at a given time, set all_medians 2 as
 %all_medians from the previous frame
-
+close all
 for j=1:10 %Loop through markers
     for t=1:n_times %Loop through times
         if ~isnan(all_medians(j,1,t))
