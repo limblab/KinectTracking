@@ -40,25 +40,34 @@
 %% Input File to Load
 
 %File to load
-main_dir='C:\Users\rhc307\Projects\limblab\data-raeed\ForceKin\Han\20170203';
-monkey='Han';
-date='20170203'; %mo-day-yr
-exp='COactpas';
-num='001';
-% file_name = 'Han_20170206_CObumpcurl_adaptation_colorTracking_003';
-file_name = [monkey '_' date '_' exp '_colorTracking_' num];
-
-% Load ColorTracking File and Settings
-fname_load=ls([main_dir '/ColorTracking/' file_name '*']);
-load(deblank(fname_load))
+% main_dir='C:\Users\rhc307\Projects\limblab\data-raeed\ForceKin\Han\20170203';
+% monkey='Han';
+% date='20170203'; %mo-day-yr
+% exp='COactpas';
+% num='001';
+% % file_name = 'Han_20170206_CObumpcurl_adaptation_colorTracking_003';
+% file_name = [monkey '_' date '_' exp '_colorTracking_' num];
+% 
+% % Load ColorTracking File and Settings
+% fname_load=ls([main_dir '/ColorTracking/' file_name '*']);
+% load(deblank(fname_load))
 
 % Rename data from loaded file (if it's in the new format)
+
 if exist('color_coords_allframes','var')
     color1=color_coords_allframes(:,3)'; % Marker colors 1 and 3 were switched in python script at some point
     color2=color_coords_allframes(:,2)';
     color3=color_coords_allframes(:,1)';
     color4=color_coords_allframes(:,4)';
 end
+xWin = [-.15,-.11];
+yWin = [-.15,-.11];
+zWin = [.63,.69];
+indices = 1:45749;
+
+color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
+
+color2= removeWindow(color2, indices, [.65, .75],[-.2,-.1], [-.15, -.05]);
 
 %% User Options / Initializations
 
@@ -66,7 +75,7 @@ end
 savefile=1;
 
 %Use all default values for constraints (mostly for distances between markers)
-use_defaults=0;
+use_defaults= 0;
 
 %If this is the first file from a date, set equal to 1 (there are more initializations)
 %Also, if you have use_defaults=1, set this equal to 1
@@ -120,8 +129,7 @@ plot_during=0; %If you'll be displaying the marker tracking while it's running a
 %The z limit will only matter if plot_during=1
 xlims=[-.5 .5];
 ylims=[-.5 .4];
-zlims=[.9 1.4];
-
+zlims=[.25 1.25];
 pause_time=.03;
 
 if plot_during
@@ -231,19 +239,19 @@ if ~marker_init_manual
     %closest x/y coordinate. We then get the x/y/z coordinates of that point.
     marker_inits=NaN(11,3); %Made large enough for an 11th marker (which we used at one point)
     for m=1:num_markers
-        if marker_colors{1}=='r'
+        if marker_colors{m}=='r'
             closest_point=knnsearch([x3' y3'],marker_coords_xy(m,:),'k',1);
             marker_inits(m,:)=[x3(closest_point) y3(closest_point) z3(closest_point)];
         end
-        if marker_colors{1}=='g'
+        if marker_colors{m}=='g'
             closest_point=knnsearch([x2' y2'],marker_coords_xy(m,:),'k',1);
             marker_inits(m,:)=[x2(closest_point) y2(closest_point) z2(closest_point)];
         end
-        if marker_colors{1}=='b'
+        if marker_colors{m}=='b'
             closest_point=knnsearch([x1' y1'],marker_coords_xy(m,:),'k',1);
             marker_inits(m,:)=[x1(closest_point) y1(closest_point) z1(closest_point)];
         end
-        if marker_colors{1}=='y'
+        if marker_colors{m}=='y'
             closest_point=knnsearch([x4' y4'],marker_coords_xy(m,:),'k',1);
             marker_inits(m,:)=[x4(closest_point) y4(closest_point) z4(closest_point)];
         end
@@ -350,7 +358,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
     num_clust=length(marker_ids);
     within_clust_dist1=.07; %How close points must be to the previous frame's first marker, # marker_ids(1), to be considered
     within_clust_dist2=.07; %How close points must be to the previous frame's second marker, # marker_ids(2), to be considered
-    dist_min=0.07;
+    dist_min=0.004;
     
     medians=NaN(num_clust,3,n_times);
     medians2=NaN(num_clust,3,n_times);
@@ -584,11 +592,13 @@ if ~use_defaults %Default was set above: nanmean(angle)-4*nanstd(angle). If you'
         if ~isempty(user_input)
             while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
                 user_input=input('Re-enter valid time point \n');
+                user_input = [];
             end
         end
         if ~isempty(user_input)
             plot_together_4colors_func(user_input, [7 8 10], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
         end
+        
     end
     
     %SET ANGLE THRESHOLD FOR RED ELBOW REMOVAL
@@ -608,7 +618,7 @@ end
 %Remove red elbow points (based on angle)
 rmv10=angle<red_elbow_angle_thresh;
 all_medians(10,:,rmv10)=NaN;
-
+close all
 %% Green Shoulder
 
 if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a green shoulder marker
@@ -666,7 +676,7 @@ if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a gree
     all_medians(marker_ids,:,:)=medians;
     all_medians2(marker_ids,:,:)=medians2;
 end
-
+close all
 %% Green Elbow
 
 %Initializations
@@ -1940,7 +1950,11 @@ end
 %greater than the distance from the elbow to point 1 (which shouldn't
 %happen)
 idxs=find(dists2>dists1);
-
+xWin = [-.04,.03];
+yWin = [0,.06];
+zWin = [.55,.58];
+indices = 1:45749;
+color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
 %Plot those times
 for i=1:length(idxs)
     

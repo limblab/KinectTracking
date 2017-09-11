@@ -10,8 +10,8 @@ all_medians_aligned(:,:,start:finish)=all_medians;
 markers=1:10; %The markers you want to plot
 pause_manually=0; %Whether you want it to pause until you click after each frame
 plot_original=0; %Whether the original points (pixels) should be plotted
-start_frame=1000+start-1; %Frame you want to start at
-finish_frame=2000+start-1; %Frame you want to end at
+start_frame=40000+start-1; %Frame you want to start at
+finish_frame=41000+start-1; %Frame you want to end at
 
 %% Plot
 

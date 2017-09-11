@@ -5,14 +5,14 @@
 
 %% User input (set frames you're looking at)
 
-frames=1:5;
+frames=1020:1100;
 
 
 %% Rename data from loaded file (if it's in the new format)
 if exist('color_coords_allframes','var')
-    color1=color_coords_allframes(:,1)';
+    color1=color_coords_allframes(:,3)'; % Marker colors 1 and 3 were switched in python script at some point
     color2=color_coords_allframes(:,2)';
-    color3=color_coords_allframes(:,3)';
+    color3=color_coords_allframes(:,1)';
     color4=color_coords_allframes(:,4)';
 end
 
@@ -20,9 +20,10 @@ end
 %% Plot
 
 n=length(color1);
-xlims=[-.4 .5];
-ylims=[-.4 .4]; 
-zlims=[.8 1.5];
+xlims=[-.5 .5];
+ylims=[-.5 .4];
+zlims=[.25 1.25];
+
 
 figure;
 
