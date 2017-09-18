@@ -1950,7 +1950,7 @@ xWin = [-.04,.03];
 yWin = [0,.06];
 zWin = [.55,.58];
 indices = 1:45749;
-color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
+% color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
 %Plot those times
 for i=1:length(idxs)
     
