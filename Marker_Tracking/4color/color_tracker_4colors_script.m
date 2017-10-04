@@ -447,6 +447,7 @@ if first_time %If this is not the first file from a date, we don't need to run t
                 end
             end
             if ~isempty(user_input)
+                figure;
                 plot_together_4colors_func(user_input, [7 8 10], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
             end
         end
@@ -591,6 +592,7 @@ if ~use_defaults %Default was set above: nanmean(angle)-4*nanstd(angle). If you'
             end
         end
         if ~isempty(user_input)
+            figure
             plot_together_4colors_func(user_input, [7 8 10], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
         end
         
@@ -779,6 +781,7 @@ if ~use_defaults %Default was set above: nanmean(angle)-4*nanstd(angle). If you'
             end
         end
         if ~isempty(user_input)
+            figure
             plot_together_4colors_func(user_input, [6 7 8], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
         end
     end
@@ -1136,6 +1139,7 @@ if first_time
                 end
             end
             if ~isempty(user_input)
+                figure
                 plot_together_4colors_func(user_input, [1:5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
             end
         end
@@ -1849,10 +1853,14 @@ end
 idxs=find(abs(dists1-dists5)<.01);
 close all
 %Plot those times
+
 for i=1:length(idxs)
-    
+    figure(1)
+    clf;
     plot_together_4colors_func(idxs(i), [1 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
+    
+    disp(['Correction block 1 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
     
     %Points to Remove
     str1='Pt 5 is a similar distance from elbow as Pt 1 \n';
@@ -1900,9 +1908,12 @@ idxs=find(dists3>dists1);
 
 %Plot those times
 for i=1:length(idxs)
-    
+    figure(1)
+    clf
     plot_together_4colors_func(idxs(i), [1 3 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
+    
+    disp(['Correction block 2 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
     
     %Points to Remove
     str1='Pt 3 is farther from elbow than Pt 1 \n';
@@ -1955,9 +1966,12 @@ indices = 1:45749;
 % color1 = removeWindow(prevColor1, indices, xWin, yWin,zWin);
 %Plot those times
 for i=1:length(idxs)
-    
+    figure(1)
+    clf
     plot_together_4colors_func(idxs(i), [1 2 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
+    
+    disp(['Correction block 3 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
     
     %Points to Remove
     str1='Pt 2 is farther from elbow than Pt 1 \n';
@@ -2005,9 +2019,12 @@ idxs=find(dists5>dists3);
 
 %Plot those times
 for i=1:length(idxs)
-    
+    figure(1)
+    clf
     plot_together_4colors_func(idxs(i), [1 3 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
+    
+    disp(['Correction block 4 of 5, correction ' num2str(i) ' out of ' num2str(length(idx))])
     
     %Points to Remove
     str1='Pt 5 is farther from elbow than Pt 3 \n';
@@ -2054,9 +2071,12 @@ idxs=find(dists5>dists2);
 
 %Plot those times
 for i=1:length(idxs)
-    
+    figure(1)
+    clf
     plot_together_4colors_func(idxs(i), [2 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
+    
+    disp(['Correction block 5 of 5, correction ' num2str(i) ' out of ' num2str(length(idx))])
     
     %Points to Remove
     str1='Pt 5 is farther from elbow than Pt 2 \n';
@@ -2401,7 +2421,7 @@ catch ME
     % if there's an error, we want to save current workspace and point user
     % to line of error
     warning('Error occured. Saving workspace (including error information in variable ME) so user can run script section by section if desired')
-    save('error_workspace.mat')
+    save('error_workspace.mat','-v7.3')
 end
 
 %% NOW SAVING MARKERS OUTSIDE THIS SCRIPT

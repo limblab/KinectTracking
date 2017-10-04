@@ -15,16 +15,18 @@ xlims=[min(min(medians(markers,1,:))) max(max(medians(markers,1,:)))];
 ylims=[min(min(medians(markers,2,:))) max(max(medians(markers,2,:)))];
 zlims=[min(min(medians(markers,3,:))) max(max(medians(markers,3,:)))];
 
-xlims=[-.4 .5];
-ylims=[-.4 .4];
-zlims=[.8 1.4];
+zlims=[0.55 0.95];
+xlims=[-.6 0.2];
+ylims=[-.3 0.1];
+view_angs = [-38 14];
 
 %Initialize figure
-figure;
+% figure;
 set(gca,'NextPlot','replacechildren');
 xlim(zlims)
 ylim(xlims)
 zlim(ylims)
+view(view_angs)
 
 %Colors of each marker
 plot_colors_all=[1 0 0; 0 1 0; 0 0 1; 1 1 0; 0 1 1; 1 0 1; 0 0 0; 1 .5 0; .5 0 1; 0 1 .5; 0 0 0];
@@ -83,6 +85,7 @@ zlabel('y')
 xlim(zlims)
 ylim(xlims)
 zlim(ylims)
+view(view_angs)
 
 
 end
