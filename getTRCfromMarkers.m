@@ -64,7 +64,7 @@ if saveFolder(end) ~= filesep
     saveFolder = [saveFolder filesep];
 end
 writeToTRC(md,[saveFolder prefix{1} '_markerData.trc'])
-writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_grf.mot'])
+writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_handleForce.mot'])
 
 %% 9. PUT TARGET DATA INTO TRC FORMAT
 % % find meta data
