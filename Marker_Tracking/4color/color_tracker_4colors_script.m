@@ -2024,7 +2024,7 @@ for i=1:length(idxs)
     plot_together_4colors_func(idxs(i), [1 3 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
     
-    disp(['Correction block 4 of 5, correction ' num2str(i) ' out of ' num2str(length(idx))])
+    disp(['Correction block 4 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
     
     %Points to Remove
     str1='Pt 5 is farther from elbow than Pt 3 \n';
@@ -2076,7 +2076,7 @@ for i=1:length(idxs)
     plot_together_4colors_func(idxs(i), [2 5], [1:10], all_medians, color1, color2, color3, color4, start, finish, 1)
     title(num2str(idxs(i)));
     
-    disp(['Correction block 5 of 5, correction ' num2str(i) ' out of ' num2str(length(idx))])
+    disp(['Correction block 5 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
     
     %Points to Remove
     str1='Pt 5 is farther from elbow than Pt 2 \n';
