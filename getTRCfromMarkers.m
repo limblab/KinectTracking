@@ -60,11 +60,11 @@ prefix=cds.meta.rawFileName;
 if ~iscell(prefix)
     prefix={prefix};
 end
-if saveFolder(end) ~= filesep
-    saveFolder = [saveFolder filesep];
-end
-writeToTRC(md,[saveFolder prefix{1} '_markerData.trc'])
-writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_handleForce.mot'])
+% if saveFolder(end) ~= filesep
+%     saveFolder = [saveFolder filesep];
+% end
+writeToTRC(md,fullfile(saveFolder,[prefix{1} '_markerData.trc']))
+writeHandleForceOpenSim(md,cds,handle_opensim,fullfile(saveFolder,[prefix{1} '_handleForce.mot']))
 
 %% 9. PUT TARGET DATA INTO TRC FORMAT
 % % find meta data
