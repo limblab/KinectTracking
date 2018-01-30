@@ -1,9 +1,10 @@
-function affine_xform = getTRCfromMarkers(cds,marker_data,saveFolder,varargin)
+function [affine_xform,md] = getTRCfromMarkers(cds,marker_data,saveFolder,varargin)
 % Given a cds, marker data from color tracking, and a save location, will
 % spatiotemporally align the markers to the data in the CDS, smooth the
 % markers, transform the coordinates for use in OpenSim, and write out a
 % TRC file for the marker locations and a MOT file for the GRF from the
-% handle interaction force into the save folder.
+% handle interaction force into the save folder. Also saves transformed
+% marker data in mat file.
 
 
 %% 4. PUT KINECT MARKER LOCATIONS IN HANDLE COORDINATES
@@ -60,11 +61,12 @@ prefix=cds.meta.rawFileName;
 if ~iscell(prefix)
     prefix={prefix};
 end
-% if saveFolder(end) ~= filesep
-%     saveFolder = [saveFolder filesep];
-% end
-writeToTRC(md,fullfile(saveFolder,[prefix{1} '_markerData.trc']))
-writeHandleForceOpenSim(md,cds,handle_opensim,fullfile(saveFolder,[prefix{1} '_handleForce.mot']))
+if saveFolder(end) ~= filesep
+    saveFolder = [saveFolder filesep];
+end
+save(fullfile(saveFolder,[prefix{1} '_markerData.mat']),'md')
+writeToTRC(md,[saveFolder prefix{1} '_markerData.trc'])
+writeHandleForceOpenSim(md,cds,handle_opensim,[saveFolder prefix{1} '_handleForce.mot'])
 
 %% 9. PUT TARGET DATA INTO TRC FORMAT
 % % find meta data

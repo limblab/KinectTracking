@@ -43,7 +43,7 @@ frame_rate = 1/mean(diff(marker_data.t));
 num_markers = 10; % ONLY USED 10 MARKERS FOR CHIPS DATA
 start_idx = find(marker_data.t>=0,1,'first');
 num_frames = length(marker_data.t)-start_idx+1;
-marker_names = {'Marker_1','Marker_2','Marker_3','Marker_4','Marker_5','Marker_6','Marker_7','Marker_8','Shoulder JC','Pronation Pt1'};
+marker_names = {'Marker_1','Marker_2','Marker_3','Marker_4','Marker_5','Marker_6','Marker_7','Marker_8','Shoulder_JC','Pronation_Pt1'};
 
 % open file and write header
 [~,prefix,ext] = fileparts(savefile_name);
