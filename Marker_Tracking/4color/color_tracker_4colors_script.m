@@ -84,10 +84,12 @@ use_defaults= 0;
 
 
 %TIME INITIALIZATIONS
-start=1; %Time point we're starting at. Importantly, this script is
-%currently set up to require that all markers are visible during the "start" frame.
-%Thus, the user can use  the script "original_colors_plots_4colors" to find
-%the first frame where all markers are visible.
+if ~exist('start','var')
+    start=1; %Time point we're starting at. Importantly, this script is
+    %currently set up to require that all markers are visible during the "start" frame.
+    %Thus, the user can use  the script "original_colors_plots_4colors" to find
+    %the first frame where all markers are visible.
+end
 
 n=length(color1);
 finish=n; %Time point we're finishing at
@@ -443,7 +445,6 @@ if first_time %If this is not the first file from a date, we don't need to run t
             if ~isempty(user_input)
                 while ~(isnumeric(user_input) && mod(user_input,1)==0 && user_input>=start && user_input<=finish)
                     user_input=input('Re-enter valid time point \n');
-                    user_input = [];
                 end
             end
             if ~isempty(user_input)
@@ -2399,7 +2400,11 @@ for j=1:10 %Loop through markers
         if ~isnan(all_medians(j,1,t))
             all_medians2(j,:,t)=all_medians(j,:,t);
         else
-            all_medians2(j,:,t)=all_medians2(j,:,t-1);
+            if t<2
+                all_medians(j,:,t)=NaN;
+            else
+                all_medians2(j,:,t)=all_medians2(j,:,t-1);
+            end
         end
     end
 end

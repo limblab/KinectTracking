@@ -5,7 +5,7 @@
 
 %% User input (set frames you're looking at)
 
-frames=1020:1100;
+frames=1:100;
 
 
 %% Rename data from loaded file (if it's in the new format)

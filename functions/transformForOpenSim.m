@@ -37,7 +37,17 @@ md_opensim = marker_data;
 shoulder_pos_lab = squeeze(marker_data.pos(9,:,:))';
 marker_loss_points = find(diff(isnan(shoulder_pos_lab(:,1)))>0);
 marker_reappear_points = find(diff(isnan(shoulder_pos_lab(:,1)))<0);
-if(~isempty(marker_loss_points) || ~isempty(marker_reappear_points))
+if isempty(marker_loss_points) && ~isempty(marker_reappear_points)
+    % means that marker was lost to start, reappeared and never lost again
+    % Dont know what to do here other than put a zero at start off loss
+    %     marker_reappear_points(1) = [];
+    marker_loss_points = 0;
+    warning('Shoulder position marker not found at start of file. Replacing missing start points with first reappearance position')
+elseif ~isempty(marker_loss_points) && isempty(marker_reappear_points)
+    % means that  marker was lost only at end
+    % use last index
+    marker_reappear_points = length(shoulder_pos_lab);
+elseif ~isempty(marker_loss_points) || ~isempty(marker_reappear_points)
     if length(marker_loss_points)>length(marker_reappear_points) || marker_loss_points(end)>marker_reappear_points(end)
         %Means that a marker was lost but never found again at end of file
         %append last index
@@ -50,6 +60,9 @@ if(~isempty(marker_loss_points) || ~isempty(marker_reappear_points))
         marker_loss_points = [0;marker_loss_points];
         warning('Shoulder position marker not found at start of file. Replacing missing start points with first reappearance position')
     end
+end
+% fix marker loss
+if ~isempty(marker_loss_points) && isempty(marker_reappear_points)
     for i=1:length(marker_loss_points)
         marker_loss = marker_loss_points(i);
         marker_reappear = marker_reappear_points(i);

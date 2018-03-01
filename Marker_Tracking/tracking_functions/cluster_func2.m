@@ -38,7 +38,11 @@ end
 %to have all NaNs. And set medians2 to be medians2 of the previous frame.
 if isempty(loc)
     medians(:,:,t)=NaN;
-    medians2(:,:,t)=medians2(:,:,t-1);
+    if t<2
+        medians2(:,:,t) = NaN;
+    else
+        medians2(:,:,t)=medians2(:,:,t-1);
+    end
     
 else
     %We initiallly set the number of clusters to look for (curr_num_clust)
@@ -115,7 +119,7 @@ else
                     std_x=std(loc(clust==j,1));
                     std_y=std(loc(clust==j,2));
                     std_z=std(loc(clust==j,3));
-                    if std_z > std_x && std_z > std_y;
+                    if std_z > std_x && std_z > std_y
     %                 dist_xy=pdist2(loc(clust==j,1:2),loc(clust==j,1:2));
     %                 if mean(dist_xy(:)<.01)
                         meds(j,3)=min(loc(clust==j,3));
