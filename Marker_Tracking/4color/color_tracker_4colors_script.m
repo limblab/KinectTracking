@@ -129,7 +129,7 @@ if ~exist('section_completed','var') || section_completed<=1
 end
 
 %% 2. SELECT THE INITIAL MARKER LOCATIONS IN THE "START" FRAME
-if ~exist('section_completed','var') || section_completed<=2
+if ~exist('section_completed','var') || section_completed<2
     %% Marker location schematic figure
     
     %This produces a schematic figure of the marker locations, colors, and
@@ -246,6 +246,7 @@ if ~exist('section_completed','var') || section_completed<=3
     
     
     % LOOP THROUGH TIME
+    if section_completed <2.1
     t=0;
     for i=start:finish
         
@@ -283,12 +284,13 @@ if ~exist('section_completed','var') || section_completed<=3
 
     section_completed = 2.1;
     
+    
     %Put the markers found here in the matrix of all markers
     all_medians(marker_ids,:,:)=medians;
     all_medians2(marker_ids,:,:)=medians2;
-    
+    end
     %% Red Arm (Preliminary)
-    
+    if section_complete <2.2
     if first_time %If this is not the first file from a date, we don't need to run this.
         
         %Initializations
@@ -354,9 +356,9 @@ if ~exist('section_completed','var') || section_completed<=3
     end
 
     section_completed = 2.2;
-    
+    end
     %% Set limits on red arm to blue arm distances
-    
+    if section_completed <2.3
     %PLOT RED ARM TO BLUE ARM DISTANCES
     if first_time %If this is not the first file from a date, we don't need to run this.
         
@@ -423,10 +425,11 @@ if ~exist('section_completed','var') || section_completed<=3
     end
 
     section_completed = 2.3;
-
+    end
     %% Red Arm (Redo)
     %Note that this is different from the previous version of "Red Arm" because
     %now there are constraints involving distance from the blue arm marker
+    if section_completed <2.4
     close all
     %Initializations
     plot_on=0;
@@ -493,8 +496,10 @@ if ~exist('section_completed','var') || section_completed<=3
     all_medians2(marker_ids,:,:)=medians2;
     
     section_completed = 2.4;
-
+    end
+    
     %% Remove faulty red elbow points
+    if section_completed < 2.5
     close all
     %This calculates (and plots) the angle made by points 7,8,10
     %Problems with the red elbow marker (point 10) will make this angle wrong
@@ -563,8 +568,10 @@ if ~exist('section_completed','var') || section_completed<=3
     all_medians(10,:,rmv10)=NaN;
     
     section_completed = 2.5;
-
+    end
+    
     %% Green Shoulder
+    if section_completed <2.6
     close all
     if ~isempty(green_shoulder_marker_ids) %Only do this if it is a file with a green shoulder marker
         %Initializations
@@ -624,9 +631,9 @@ if ~exist('section_completed','var') || section_completed<=3
     close all
 
     section_completed = 2.6;
-
+    end
     %% Green Elbow
-    
+    if section_completed <2.7
     %Initializations
     plot_on=0;
     marker_ids=green_elbow_marker_ids;
@@ -690,8 +697,9 @@ if ~exist('section_completed','var') || section_completed<=3
     all_medians2(marker_ids,:,:)=medians2;
     
     section_completed = 2.7;
-
+    end
     %% Remove faulty green elbow points
+
     close all
     %This calculates (and plots) the angle made by points 7,8,6
     %Problems with the green elbow marker (point 6) will make this angle wrong
@@ -757,12 +765,13 @@ if ~exist('section_completed','var') || section_completed<=3
 
     %log file
     section_completed = 3;
-end
 
+end
 %% 4. PRELIMINARY TRACKING OF HAND MARKERS (IN ORDER TO SET DISTANCE CONSTRAINTS TO ARM MARKERS)
-if ~exist('section_completed','var') || section_completed<=4
+if ~exist('section_completed','var') || section_completed<4
     close all
     %% Red Hand (Preliminary)
+    if section_completed < 3.1
     if first_time %If this is not the first file from a date, we don't need to run this.
         
         %Initializations
@@ -829,8 +838,9 @@ if ~exist('section_completed','var') || section_completed<=4
     end
     
     section_completed = 3.1;
-
+    end
     %% Yellow Hand (Preliminary)
+    if section_completed <3.2
     close all
     if first_time %If this is not the first file from a date, we don't need to run this.
         
@@ -898,8 +908,10 @@ if ~exist('section_completed','var') || section_completed<=4
     end
     
     section_completed = 3.2;
+    end
 
     %% Green Hand (Preliminary)
+    if section_completed <3.3
     close all
     if first_time %If this is not the first file from a date, we don't need to run this.
         
@@ -968,8 +980,10 @@ if ~exist('section_completed','var') || section_completed<=4
     end
     
     section_completed = 3.3;
-
+    end
+    
     %% Blue Hand (Preliminary)
+    if section_completed < 4
     close all
     if first_time %If this is not the first file from a date, we don't need to run this.
         
@@ -1035,11 +1049,13 @@ if ~exist('section_completed','var') || section_completed<=4
 
     %log file
     section_completed = 4;
+    end
 end
 
 %% 5. SET DISTANCE CONSTRAINTS OF HAND MARKERS TO ARM MARKERS
 if ~exist('section_completed','var') || section_completed<=5
     %% Set distance limits of hand markers to red elbow marker (after plotting the distances first)
+    if section_completed <4.1
     close all
     %PLOT
     %Plots the distances of every hand marker to to red elbow marker in order
@@ -1163,8 +1179,10 @@ if ~exist('section_completed','var') || section_completed<=5
     end
     
     section_completed = 4.1;
+    end
 
     %% Set distance limits of hand markers to blue arm marker (after plotting the distances first)
+    if section_completed <4.2
     close all
     %PLOT
     %Plots the distances of every hand marker to to blue arm marker in order
@@ -1264,7 +1282,7 @@ if ~exist('section_completed','var') || section_completed<=5
     end
     
     section_completed = 4.2;
-
+    end
     %% Set distance limits of hand markers to red arm marker (after plotting the distances first)
     
     %Plots the distances of every hand marker to to red arm marker in order
@@ -1272,7 +1290,7 @@ if ~exist('section_completed','var') || section_completed<=5
     %tracking)
     
     %Note that using the distance from the hand to the red arm marker only is helpful for a task with holding the handle
-    
+    if section_completed <4.3
     close all
     if first_time
         %Calculate distances
@@ -1364,8 +1382,9 @@ if ~exist('section_completed','var') || section_completed<=5
     end
     
     section_completed = 4.3;
-
+    end
     %% Set distance limits between green hand markers
+    if section_completed <4.4
     close all
     %Plots the distances of the green hand markers to each other, in order to
     %determine what distances are allowed (for rerunning the hand marker tracking)
@@ -1412,13 +1431,14 @@ if ~exist('section_completed','var') || section_completed<=5
         end
         
     end
-
+    end
     %log file
     section_completed = 5;
 end
 
 %% 6. TRACK HAND MARKERS (USING DISTANCE CONSTRAINTS FROM ABOVE), EXCEPT YELLOW
 if ~exist('section_completed','var') || section_completed<=6
+    if section_completed < 5.1
     %% Green Hand (Redo)
     close all
     %Initializations
@@ -1608,8 +1628,9 @@ if ~exist('section_completed','var') || section_completed<=6
     all_medians2(marker_ids,:,:)=medians2;
     
     section_completed = 5.1;
-
+    end
     %% Blue Hand (Redo)
+    if section_completed <5.2
     close all
     %Initializations
     plot_on=0;
@@ -1701,8 +1722,9 @@ if ~exist('section_completed','var') || section_completed<=6
     all_medians2(marker_ids,:,:)=medians2;
     
     section_completed = 5.2;
-
+    end
     %% Red Hand (Redo)
+    if section_completed <5.3
     close all
     %Initializations
     plot_on=0;
@@ -1795,11 +1817,13 @@ if ~exist('section_completed','var') || section_completed<=6
 
     %log file
     section_completed = 6;
+    end
 end
 
 %% 7. MANUAL CORRECTION OF HAND MARKERS (REMOVING/SWITCHING) FOR FRAMES THAT GET AUTOMATICALLY FLAGGED
 if ~exist('section_completed','var') || section_completed<=7
     %% Calculate hand distances from red elbow marker
+    if section_completed <6.1
     close all
     %Initialize some vectors that I use later for calculating the distance
     %between points
@@ -1828,11 +1852,12 @@ if ~exist('section_completed','var') || section_completed<=7
     % plot(dists5,'c-x');
     
     section_completed = 6.1;
-
+    end
     %% Make corrections when the green hand markers have a similar distance to the elbow
     
     %Find times when marker 1 and marker 5 are a similar distance to the elbow
     %marker (which is a problem)
+    if section_completed <6.2
     idxs=find(abs(dists1-dists5)<.01);
     close all
     %Plot those times
@@ -1883,8 +1908,9 @@ if ~exist('section_completed','var') || section_completed<=7
     end
     
     section_completed = 6.2;
-
+    end
     %% Make corrections when marker 3 has a larger distance to the elbow than marker 1
+    if section_completed < 6.3
     close all
     %Find times (idxs) where the distance from the elbow to point 3 are
     %greater than the distance from the elbow to point 1 (which shouldn't
@@ -1939,8 +1965,10 @@ if ~exist('section_completed','var') || section_completed<=7
     end
     
     section_completed = 6.3;
-
+    end
+    
     %% Make corrections when marker 2 has a larger distance to the elbow than marker 1
+    if section_completed < 6.4
     close all
     %Find times (idxs) where the distance from the elbow to point 2 are
     %greater than the distance from the elbow to point 1 (which shouldn't
@@ -1998,8 +2026,9 @@ if ~exist('section_completed','var') || section_completed<=7
     end
     
     section_completed = 6.4;
-
+    end
     %% Make corrections when marker 5 has a larger distance to the elbow than marker 3
+    if section_completed <6.5
     close all
     
     %Find times when marker 5 has a greater distance to the elbow
@@ -2053,8 +2082,9 @@ if ~exist('section_completed','var') || section_completed<=7
     end
     
     section_completed = 6.5;
-
+    end
     %% Make corrections when marker 5 has a larger distance to the elbow than marker 2
+    if section_completed < 6.6
     close all
     %Find times when marker 5 has a greater distance to the elbow
     %than marker 3 (which is a problem)
@@ -2109,6 +2139,7 @@ if ~exist('section_completed','var') || section_completed<=7
 
     %log file
     section_completed = 7;
+    end
 end
 
 %% 8. TRACK YELLOW HAND MARKERS
@@ -2215,7 +2246,7 @@ end
 %% 9. DO SOME ADDITIONAL HAND CORRECTIONS (FOR TIMES WHEN ARM MARKERS WERE MISSING)
 if ~exist('section_completed','var') || section_completed<=9
     %SINCE ALL THE ABOVE WAS BASED ON DISTANCE TO THE RED ELBOW)
-    
+    if section_completed < 8.1
     %% Remove marker 3 that is too far away from other hand markers - Automatic
     close all
     %Calculate distance from marker 3 to other hand markers
@@ -2245,8 +2276,10 @@ if ~exist('section_completed','var') || section_completed<=9
     all_medians(3,:,rmv3)=NaN;
     
     section_completed = 8.1;
-
+    end
+    
     %% Remove marker 2 that is too far away from other hand markers - Automatic
+    if section_completed <8.2
     close all
     %Calculate distance from marker 2 to other hand markers
     for i=1:n_times
@@ -2275,11 +2308,12 @@ if ~exist('section_completed','var') || section_completed<=9
     all_medians(2,:,rmv2)=NaN;
     
     section_completed = 8.2;
-
+    end
     %% Set distance limits of hand markers to shoulder (after plotting the distances first), and remove markers outside those limits
     
     %Initialize some vectors that I use later for calculating the distance
     %between points
+    if section_completed < 8.3
     dists1=NaN(1,n_times);
     dists2=NaN(1,n_times);
     dists3=NaN(1,n_times);
@@ -2388,6 +2422,7 @@ if ~exist('section_completed','var') || section_completed<=9
 
     %log file
     section_completed = 9;
+    end
 end
 
 %% 10. CLEAN UP DATA A LITTLE, AND SAVE
@@ -2397,6 +2432,7 @@ if ~exist('section_completed','var') || section_completed<=10
     %If the marker is present at a given time, set all_medians2=all_medians
     %If the marker isn't present at a given time, set all_medians 2 as
     %all_medians from the previous frame
+    if section_completed < 9.1
     close all
     for j=1:10 %Loop through markers
         for t=1:n_times %Loop through times
@@ -2413,11 +2449,11 @@ if ~exist('section_completed','var') || section_completed<=10
     end
     
     section_completed = 9.1;
-
+    end
     %% Make matrices line up correctly with start time
     
     %Make the final matrices begin at time 1 instead of time "start."
-    
+    if section_completed < 9.2
     temp=all_medians;
     temp2=all_medians2;
     
@@ -2429,6 +2465,7 @@ if ~exist('section_completed','var') || section_completed<=10
 
     %log file
     section_completed = 10;
+    end
 end
 
 catch ME
