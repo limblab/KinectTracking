@@ -36,13 +36,14 @@
 %commented on in detail.
 
 %% 1. INITIALIZATIONS %%%%%%%%%%%%%%%%%%
+try
 if ~exist('section_completed','var') || section_completed<=1
     %% Input File to Load
     
     % NOW LOADING FILE OUTSIDE THIS SCRIPT
     
     % Rename data from loaded file (if it's in the new format)
-    try
+    
         
     if exist('color_coords_allframes','var')
         color1=color_coords_allframes(:,3)'; % Marker colors 1 and 3 were switched in python script at some point
@@ -253,7 +254,7 @@ if ~exist('section_completed','var') || section_completed<=3
         t=t+1;
         
         %0. Get x,y,z positions
-        getXYZfromKinect(color{i})
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
         %1. Filter some bad points (those that are really far away)
@@ -290,7 +291,7 @@ if ~exist('section_completed','var') || section_completed<=3
     all_medians2(marker_ids,:,:)=medians2;
     end
     %% Red Arm (Preliminary)
-    if section_complete <2.2
+    if section_completed <2.2
     if first_time %If this is not the first file from a date, we don't need to run this.
         
         %Initializations
@@ -313,7 +314,7 @@ if ~exist('section_completed','var') || section_completed<=3
             t=t+1;
             
             %0. Get x,y,z positions
-            getXYZfromKinect(color{i})
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
             %1. Filter some bad points (those that are really far away)
@@ -452,7 +453,7 @@ if ~exist('section_completed','var') || section_completed<=3
         t=t+1;
         
         %0. Get x,y,z positions
-        getXYZfromKinect(color{i})
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
         %1. Filter some bad points (those that are really far away)
@@ -2472,7 +2473,7 @@ catch ME
     % if there's an error, we want to save current workspace and point user
     % to line of error
     warning('Error occured. Saving workspace (including error information in variable ME) so user can run script section by section if desired')
-    save('error_workspace.mat','-v7.3')
+%     save('error_workspace.mat','-v7.3')
 end
 
 % NOW SAVING MARKERS OUTSIDE THIS SCRIPT
