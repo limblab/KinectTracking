@@ -162,30 +162,15 @@ if ~exist('section_completed','var') || section_completed<2
     num_markers=10;
     marker_coords_xy=NaN(num_markers,2);
     
-    subplot(1,2,2);
-    % <function>
     %Get x,y,z coordinates for points in all colors
-    temp=color1{start};
-    x1=temp(1:end/3);
-    y1=temp(end/3+1:2*end/3);
-    z1=temp(2*end/3+1:end);
-    hold on;
-    temp=color2{start};
-    x2=temp(1:end/3);
-    y2=temp(end/3+1:2*end/3);
-    z2=temp(2*end/3+1:end);
-    temp=color3{start};
-    x3=temp(1:end/3);
-    y3=temp(end/3+1:2*end/3);
-    z3=temp(2*end/3+1:end);
-    temp=color4{start};
-    x4=temp(1:end/3);
-    y4=temp(end/3+1:2*end/3);
-    z4=temp(2*end/3+1:end);
-    % </function>
+    [x1,y1,z1] = getXYZfromKinect(color1{start});
+    [x2,y2,z2] = getXYZfromKinect(color2{start});
+    [x3,y3,z3] = getXYZfromKinect(color3{start});
+    [x4,y4,z4] = getXYZfromKinect(color4{start});
     
     %Plot all the points in the x/y plane (z, which is depth, doesn't change
     %much between the points)
+    subplot(1,2,2);
     scatter(x1,y1,'b')
     hold on;
     scatter(x2,y2,'g')
@@ -249,6 +234,7 @@ if ~exist('section_completed','var') || section_completed<=3
     % LOOP THROUGH TIME
     if section_completed <2.1
     t=0;
+    prev_num_clust=num_clust;
     for i=start:finish
         
         t=t+1;
@@ -257,23 +243,24 @@ if ~exist('section_completed','var') || section_completed<=3
         [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to the previous marker
+            keep1=D(:,1)<within_clust_dist1;
+
+            %Remove points (those we're not keeping)
+            rmv=~(keep1);
+
+            %Actually remove the points
+            loc(rmv,:)=[];
         end
-        
-        % Keep all the points close enough to the previous marker
-        keep1=D(:,1)<within_clust_dist1;
-        
-        %Remove points (those we're not keeping)
-        rmv=~(keep1);
-        
-        %Actually remove the points
-        loc(rmv,:)=[];
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
@@ -309,6 +296,7 @@ if ~exist('section_completed','var') || section_completed<=3
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust=num_clust;
         for i=start:finish
             
             t=t+1;
@@ -317,25 +305,25 @@ if ~exist('section_completed','var') || section_completed<=3
             [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            %Get distances of all points to the marker in the previous frame
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                %Get distances of all points to the marker in the previous frame
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+
+                % Keep all the points close enough to either of the previous markers
+                keep1=D(:,1)<within_clust_dist1;
+                keep2=D(:,2)<within_clust_dist2;
+
+                %Remove points (those we're not keeping)
+                rmv=~(keep1 | keep2);
+
+                %Actually remove the points
+                loc(rmv,:)=[];
             end
-            
-            % Keep all the points close enough to either of the previous markers
-            keep1=D(:,1)<within_clust_dist1;
-            keep2=D(:,2)<within_clust_dist2;
-            
-            %Remove points (those we're not keeping)
-            rmv=~(keep1 | keep2);
-            
-            %Actually remove the points
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             %Note that this uses "cluster_func" instead of "cluster_func2"
@@ -448,6 +436,7 @@ if ~exist('section_completed','var') || section_completed<=3
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust=num_clust;
     for i=start:finish
         
         t=t+1;
@@ -456,34 +445,35 @@ if ~exist('section_completed','var') || section_completed<=3
         [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            %Get distance to blue arm marker from the current frame
+            D2=pdist2(loc,all_medians2(7,:,t));
+
+            % Keep all the points close enough to either of the previous markers
+            keep1=D(:,1)<within_clust_dist1;
+            keep2=D(:,2)<within_clust_dist2;
+
+            %Also keep if the it's near the blue arm marker (in case one of the
+            %others disappears for a while)
+            keep3=D2<red_elbow_dist_from_blue;
+
+            %Remove points that are too far from the blue marker
+            rmv0=D2>red_blue_arm_dist_max;
+
+            %Remove points (those we're not keeping, or those we're removing)
+            rmv=~(keep1 | keep2 | keep3) | rmv0;
+
+            %Actually remove the points
+            loc(rmv,:)=[];
         end
-        
-        %Get distance to blue arm marker from the current frame
-        D2=pdist2(loc,all_medians2(7,:,t));
-        
-        % Keep all the points close enough to either of the previous markers
-        keep1=D(:,1)<within_clust_dist1;
-        keep2=D(:,2)<within_clust_dist2;
-        
-        %Also keep if the it's near the blue arm marker (in case one of the
-        %others disappears for a while)
-        keep3=D2<red_elbow_dist_from_blue;
-        
-        %Remove points that are too far from the blue marker
-        rmv0=D2>red_blue_arm_dist_max;
-        
-        %Remove points (those we're not keeping, or those we're removing)
-        rmv=~(keep1 | keep2 | keep3) | rmv0;
-        
-        %Actually remove the points
-        loc(rmv,:)=[];
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
@@ -590,33 +580,30 @@ if ~exist('section_completed','var') || section_completed<=3
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust=num_clust;
         for i=start:finish
             
             t=t+1;
             
             %0. Get x,y,z positions
-            temp=color{i};
-            x=temp(1:end/3);
-            y=temp(end/3+1:2*end/3);
-            z=temp(2*end/3+1:end);
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+
+                % Keep all the points close enough to the previous marker
+                keep1=D(:,1)<within_clust_dist1;
+
+                % Remove
+                rmv=~(keep1);
+                loc(rmv,:)=[];
             end
-            
-            % Keep all the points close enough to the previous marker
-            keep1=D(:,1)<within_clust_dist1;
-            
-            % Remove
-            rmv=~(keep1);
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
@@ -650,41 +637,40 @@ if ~exist('section_completed','var') || section_completed<=3
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust = num_clust;
     for i=start:finish
         
         t=t+1;
         
         %0. Get x,y,z positions
-        temp=color{i};
-        x=temp(1:end/3);
-        y=temp(end/3+1:2*end/3);
-        z=temp(2*end/3+1:end);
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            if t==1
+                D=pdist2(loc,prev_meds);
+                prev_num_clust=num_clust;
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to the previous marker
+            keep1=D(:,1)<within_clust_dist1;
+
+            %Also use distance from red elbow marker
+            D2=pdist2(loc,all_medians(10,:,t));
+            keep2=D2<.03; %Keep points that are close to red elbow marker
+            rmv0=D2>.03; %Remove points that are too far from red elbow marker
+
+            rmv=~(keep1|keep2) | rmv0; %Keep points that are either close enough to
+            %the previous marker or the red elbow marker. Additionally, remove
+            %points that are too far from the red elbow marker (even if they're
+            %close enough to the previous marker)
+
+            %Remove
+            loc(rmv,:)=[];
         end
-        
-        % Keep all the points close enough to the previous marker
-        keep1=D(:,1)<within_clust_dist1;
-        
-        %Also use distance from red elbow marker
-        D2=pdist2(loc,all_medians(10,:,t));
-        keep2=D2<.03; %Keep points that are close to red elbow marker
-        rmv0=D2>.03; %Remove points that are too far from red elbow marker
-        
-        rmv=~(keep1|keep2) | rmv0; %Keep points that are either close enough to
-        %the previous marker or the red elbow marker. Additionally, remove
-        %points that are too far from the red elbow marker (even if they're
-        %close enough to the previous marker)
-        
-        %Remove
-        loc(rmv,:)=[];
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2, 1 );
@@ -790,35 +776,33 @@ if ~exist('section_completed','var') || section_completed<4
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust = num_clust;
         for i=start:finish_prelim
             
             t=t+1;
             
             %0. Get x,y,z positions
-            temp=color{i};
-            x=temp(1:end/3);
-            y=temp(end/3+1:2*end/3);
-            z=temp(2*end/3+1:end);
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            %Get distances of all points to the marker in the previous frame
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                %Get distances of all points to the marker in the previous frame
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+
+                % Keep all the points close enough to either of the previous markers
+                keep1=D(:,1)<within_clust_dist1;
+
+                %Remove points (those we're not keeping)
+                rmv=~keep1;
+
+                %Actually remove the points
+                loc(rmv,:)=[];
             end
-            
-            % Keep all the points close enough to either of the previous markers
-            keep1=D(:,1)<within_clust_dist1;
-            
-            %Remove points (those we're not keeping)
-            rmv=~keep1;
-            
-            %Actually remove the points
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             %Note that this uses "cluster_func" instead of "cluster_func2"
@@ -860,35 +844,33 @@ if ~exist('section_completed','var') || section_completed<4
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust = num_clust;
         for i=start:finish_prelim
             
             t=t+1;
             
             %0. Get x,y,z positions
-            temp=color{i};
-            x=temp(1:end/3);
-            y=temp(end/3+1:2*end/3);
-            z=temp(2*end/3+1:end);
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            %Get distances of all points to the marker in the previous frame
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                %Get distances of all points to the marker in the previous frame
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+
+                % Keep all the points close enough to either of the previous markers
+                keep1=D(:,1)<within_clust_dist1;
+
+                %Remove points (those we're not keeping)
+                rmv=~keep1;
+
+                %Actually remove the points
+                loc(rmv,:)=[];
             end
-            
-            % Keep all the points close enough to either of the previous markers
-            keep1=D(:,1)<within_clust_dist1;
-            
-            %Remove points (those we're not keeping)
-            rmv=~keep1;
-            
-            %Actually remove the points
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             %Note that this uses "cluster_func" instead of "cluster_func2"
@@ -932,35 +914,33 @@ if ~exist('section_completed','var') || section_completed<4
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust = num_clust;
         for i=start:finish_prelim
             
             t=t+1;
             
             %0. Get x,y,z positions
-            temp=color{i};
-            x=temp(1:end/3);
-            y=temp(end/3+1:2*end/3);
-            z=temp(2*end/3+1:end);
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            %Get distances of all points to the marker in the previous frame
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                %Get distances of all points to the marker in the previous frame
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+                % Keep all the points close enough to either of the previous markers
+                keep1=D(:,1)<within_clust_dist1;
+                keep2=D(:,2)<within_clust_dist2;
+
+                %Remove points (those we're not keeping)
+                rmv=~(keep1 | keep2);
+
+                %Actually remove the points
+                loc(rmv,:)=[];
             end
-            % Keep all the points close enough to either of the previous markers
-            keep1=D(:,1)<within_clust_dist1;
-            keep2=D(:,2)<within_clust_dist2;
-            
-            %Remove points (those we're not keeping)
-            rmv=~(keep1 | keep2);
-            
-            %Actually remove the points
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             %Note that this uses "cluster_func" instead of "cluster_func2"
@@ -1003,33 +983,31 @@ if ~exist('section_completed','var') || section_completed<4
         
         % LOOP THROUGH TIME
         t=0;
+        prev_num_clust = num_clust;
         for i=start:finish_prelim
             
             t=t+1;
             
             %0. Get x,y,z positions
-            temp=color{i};
-            x=temp(1:end/3);
-            y=temp(end/3+1:2*end/3);
-            z=temp(2*end/3+1:end);
+            [x,y,z] = getXYZfromKinect(color{i});
             loc=[x; y; z]';
             
-            %1. Filter some bad points (those that are really far away)
-            %Get distances of all points to the marker in the previous frame
-            if t==1
-                D=pdist2(loc,prev_meds);
-                prev_num_clust=num_clust;
-            else
-                D=pdist2(loc,medians2(:,:,t-1));
+            if ~isempty(loc)
+                %1. Filter some bad points (those that are really far away)
+                %Get distances of all points to the marker in the previous frame
+                if t==1
+                    D=pdist2(loc,prev_meds);
+                else
+                    D=pdist2(loc,medians2(:,:,t-1));
+                end
+
+                %Keep points close enough to previous marker
+                keep1=D(:,1)<within_clust_dist1;
+                rmv=~(keep1);
+
+                %Actually remove
+                loc(rmv,:)=[];
             end
-            
-            %Keep points close enough to previous marker
-            keep1=D(:,1)<within_clust_dist1;
-            rmv=~(keep1);
-            
-            %Actually remove
-            loc(rmv,:)=[];
-            
             
             %2. Cluster and assign
             %Note that this uses "cluster_func" instead of "cluster_func2"
@@ -1460,69 +1438,69 @@ if ~exist('section_completed','var') || section_completed<=6
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust = num_clust;
     for i=start:finish
         
         t=t+1;
         
         %0. Get x,y,z positions
-        temp=color{i};
-        x=temp(1:end/3);
-        y=temp(end/3+1:2*end/3);
-        z=temp(2*end/3+1:end);
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
-        end
-        
-        % Keep all the points close enough to either of the previous markers
-        keep1=D(:,1)<within_clust_dist1;
-        keep2=D(:,2)<within_clust_dist2;
-        
-        %Remove points that are too close or far from the red elbow marker
-        D2=pdist2(loc,all_medians(10,:,t));
-        rmv0=D2<green_hand_dists_elbow(1) | D2>green_hand_dists_elbow(2);
-        
-        %Remove points that are too close or far from the blue arm marker
-        D3=pdist2(loc,all_medians(7,:,t));
-        rmv1=D3<green_hand_dists_bluearm(1) | D3>green_hand_dists_bluearm(2);
-        
-        %Remove points that are too close or far from the red arm marker
-        D4=pdist2(loc,all_medians(8,:,t));
-        rmv2=D4<green_hand_dists_redarm(1) | D4>green_hand_dists_redarm(2);
-        
-        %Use above criteria to set points for removal
-        %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
-        %Depending on how many frames the markers have been missing, we additionally use different criteria for removing.
-        
-        %If both markers have been missing for <=4 frames, keep points close
-        %enough to the marker's locations in the previous frame
-        if num_gone1<=4 & num_gone2<=4
-            rmv=~(keep1 | keep2) | rmv0 | rmv1 | rmv2;
-            %If the second marker has been missing for >4 frames, only keep points close
-            %enough to the first marker's location in the previous frame
-        else if num_gone1<=4 & num_gone2>4
-                rmv=~(keep1) | rmv0 | rmv1 | rmv2;
-                %If the first marker has been missing for >4 frames, only keep points close
-                %enough to the second marker's location in the previous frame
-            else if num_gone1>4 & num_gone2<=4
-                    rmv=~(keep2) | rmv0 | rmv1 | rmv2;
-                    %If both markers have been missing for >4 frames, don't keep any points
-                    %based on distance to the markers' locations in the previous frame
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to either of the previous markers
+            keep1=D(:,1)<within_clust_dist1;
+            keep2=D(:,2)<within_clust_dist2;
+
+            %Remove points that are too close or far from the red elbow marker
+            D2=pdist2(loc,all_medians(10,:,t));
+            rmv0=D2<green_hand_dists_elbow(1) | D2>green_hand_dists_elbow(2);
+
+            %Remove points that are too close or far from the blue arm marker
+            D3=pdist2(loc,all_medians(7,:,t));
+            rmv1=D3<green_hand_dists_bluearm(1) | D3>green_hand_dists_bluearm(2);
+
+            %Remove points that are too close or far from the red arm marker
+            D4=pdist2(loc,all_medians(8,:,t));
+            rmv2=D4<green_hand_dists_redarm(1) | D4>green_hand_dists_redarm(2);
+
+            %Use above criteria to set points for removal
+            %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
+            %Depending on how many frames the markers have been missing, we additionally use different criteria for removing.
+
+            %If both markers have been missing for <=4 frames, keep points close
+            %enough to the marker's locations in the previous frame
+            if num_gone1<=4 && num_gone2<=4
+                rmv=~(keep1 | keep2) | rmv0 | rmv1 | rmv2;
+                %If the second marker has been missing for >4 frames, only keep points close
+                %enough to the first marker's location in the previous frame
+            else
+                if num_gone1<=4 && num_gone2>4
+                    rmv=~(keep1) | rmv0 | rmv1 | rmv2;
+                    %If the first marker has been missing for >4 frames, only keep points close
+                    %enough to the second marker's location in the previous frame
                 else
-                    rmv=rmv0 | rmv1 | rmv2;
+                    if num_gone1>4 && num_gone2<=4
+                        rmv=~(keep2) | rmv0 | rmv1 | rmv2;
+                        %If both markers have been missing for >4 frames, don't keep any points
+                        %based on distance to the markers' locations in the previous frame
+                    else
+                        rmv=rmv0 | rmv1 | rmv2;
+                    end
                 end
             end
+
+            %Actually remove
+            loc(rmv,:)=[];
         end
-        
-        
-        %Actually remove
-        loc(rmv,:)=[];
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
@@ -1559,7 +1537,8 @@ if ~exist('section_completed','var') || section_completed<=6
                     medians2(1,:,t)=medians2(2,:,t);
                     medians2(2,:,t)=temp2;
                 end
-            else if ~isnan(all_medians(7,1,t))
+            else
+                if ~isnan(all_medians(7,1,t))
                     if pdist2(medians(1,:,t),all_medians(7,:,t))<pdist2(medians(2,:,t),all_medians(7,:,t))
                         temp=medians(1,:,t);
                         temp2=medians2(1,:,t);
@@ -1649,56 +1628,54 @@ if ~exist('section_completed','var') || section_completed<=6
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust = num_clust;
     for i=start:finish
         
         t=t+1;
         
         %0. Get x,y,z positions
-        temp=color{i};
-        x=temp(1:end/3);
-        y=temp(end/3+1:2*end/3);
-        z=temp(2*end/3+1:end);
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to the previous marker
+            keep1=D(:,1)<within_clust_dist1;
+
+            %Remove points that are too close or far from the red elbow marker
+            D2=pdist2(loc,all_medians(10,:,t));
+            rmv0=D2<blue_hand_dists_elbow(1) | D2>blue_hand_dists_elbow(2);
+
+            %Remove points that are too close or far from the blue arm marker
+            D3=pdist2(loc,all_medians(7,:,t));
+            rmv1=D3<blue_hand_dists_bluearm(1) | D3>blue_hand_dists_bluearm(2);
+
+            %Remove points that are too close or far from the red arm marker
+            D4=pdist2(loc,all_medians(8,:,t));
+            rmv2=D4<blue_hand_dists_redarm(1) | D4>blue_hand_dists_redarm(2);
+
+            %Use above criteria to set points for removal
+            %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
+            %If the marker has been missing for <=4 frames, keep points close
+            %enough to the marker's location in the previous frame
+            if num_gone<=4
+                rmv=~(keep1)| rmv0 | rmv1 | rmv2;
+            else
+                %If the marker has been missing for >4 frames, don't keep any points
+                %based on distance to the marker's location in the previous frame
+                rmv=rmv0 | rmv1 | rmv2;
+            end
+
+            %Actually remove
+            loc(rmv,:)=[];
         end
-        
-        % Keep all the points close enough to the previous marker
-        keep1=D(:,1)<within_clust_dist1;
-        
-        %Remove points that are too close or far from the red elbow marker
-        D2=pdist2(loc,all_medians(10,:,t));
-        rmv0=D2<blue_hand_dists_elbow(1) | D2>blue_hand_dists_elbow(2);
-        
-        %Remove points that are too close or far from the blue arm marker
-        D3=pdist2(loc,all_medians(7,:,t));
-        rmv1=D3<blue_hand_dists_bluearm(1) | D3>blue_hand_dists_bluearm(2);
-        
-        %Remove points that are too close or far from the red arm marker
-        D4=pdist2(loc,all_medians(8,:,t));
-        rmv2=D4<blue_hand_dists_redarm(1) | D4>blue_hand_dists_redarm(2);
-        
-        %Use above criteria to set points for removal
-        %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
-        %If the marker has been missing for <=4 frames, keep points close
-        %enough to the marker's location in the previous frame
-        if num_gone<=4
-            rmv=~(keep1)| rmv0 | rmv1 | rmv2;
-        else
-            %If the marker has been missing for >4 frames, don't keep any points
-            %based on distance to the marker's location in the previous frame
-            rmv=rmv0 | rmv1 | rmv2;
-        end
-        
-        %Actually remove
-        loc(rmv,:)=[];
-        
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
@@ -1743,56 +1720,54 @@ if ~exist('section_completed','var') || section_completed<=6
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust = num_clust;
     for i=start:finish
         
         t=t+1;
         
         %0. Get x,y,z positions
-        temp=color{i};
-        x=temp(1:end/3);
-        y=temp(end/3+1:2*end/3);
-        z=temp(2*end/3+1:end);
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to the previous marker
+            keep1=D(:,1)<within_clust_dist1;
+
+            %Remove points that are too close or far from the red elbow marker
+            D2=pdist2(loc,all_medians(10,:,t));
+            rmv0=D2<red_hand_dists_elbow(1) | D2>red_hand_dists_elbow(2);
+
+            %Remove points that are too close or far from the blue arm marker
+            D3=pdist2(loc,all_medians(7,:,t));
+            rmv1=D3<red_hand_dists_bluearm(1) | D3>red_hand_dists_bluearm(2);
+
+            %Remove points that are too close or far from the red arm marker
+            D4=pdist2(loc,all_medians(8,:,t));
+            rmv2=D4<red_hand_dists_redarm(1) | D4>red_hand_dists_redarm(2);
+
+            %Use above criteria to set points for removal
+            %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
+            %If the marker has been missing for <=4 frames, keep points close
+            %enough to the marker's location in the previous frame
+            if num_gone<=4
+                rmv=~(keep1)| rmv0 | rmv1 | rmv2;
+            else
+                %If the marker has been missing for >4 frames, don't keep any points
+                %based on distance to the marker's location in the previous frame
+                rmv=rmv0 | rmv1 | rmv2;
+            end
+
+            %Actually remove
+            loc(rmv,:)=[];
         end
-        
-        % Keep all the points close enough to the previous marker
-        keep1=D(:,1)<within_clust_dist1;
-        
-        %Remove points that are too close or far from the red elbow marker
-        D2=pdist2(loc,all_medians(10,:,t));
-        rmv0=D2<red_hand_dists_elbow(1) | D2>red_hand_dists_elbow(2);
-        
-        %Remove points that are too close or far from the blue arm marker
-        D3=pdist2(loc,all_medians(7,:,t));
-        rmv1=D3<red_hand_dists_bluearm(1) | D3>red_hand_dists_bluearm(2);
-        
-        %Remove points that are too close or far from the red arm marker
-        D4=pdist2(loc,all_medians(8,:,t));
-        rmv2=D4<red_hand_dists_redarm(1) | D4>red_hand_dists_redarm(2);
-        
-        %Use above criteria to set points for removal
-        %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
-        %If the marker has been missing for <=4 frames, keep points close
-        %enough to the marker's location in the previous frame
-        if num_gone<=4
-            rmv=~(keep1)| rmv0 | rmv1 | rmv2;
-        else
-            %If the marker has been missing for >4 frames, don't keep any points
-            %based on distance to the marker's location in the previous frame
-            rmv=rmv0 | rmv1 | rmv2;
-        end
-        
-        %Actually remove
-        loc(rmv,:)=[];
-        
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
@@ -2163,60 +2138,58 @@ if ~exist('section_completed','var') || section_completed<=8
     
     % LOOP THROUGH TIME
     t=0;
+    prev_num_clust = num_clust;
     for i=start:finish
         
         t=t+1;
         
         %0. Get x,y,z positions
-        temp=color{i};
-        x=temp(1:end/3);
-        y=temp(end/3+1:2*end/3);
-        z=temp(2*end/3+1:end);
+        [x,y,z] = getXYZfromKinect(color{i});
         loc=[x; y; z]';
         
-        %1. Filter some bad points (those that are really far away)
-        %Get distances of all points to the marker in the previous frame
-        if t==1
-            D=pdist2(loc,prev_meds);
-            prev_num_clust=num_clust;
-        else
-            D=pdist2(loc,medians2(:,:,t-1));
+        if ~isempty(loc)
+            %1. Filter some bad points (those that are really far away)
+            %Get distances of all points to the marker in the previous frame
+            if t==1
+                D=pdist2(loc,prev_meds);
+            else
+                D=pdist2(loc,medians2(:,:,t-1));
+            end
+
+            % Keep all the points close enough to the previous marker
+            keep1=D(:,1)<within_clust_dist1;
+
+            %Remove points that are too close or far from the red elbow marker
+            D2=pdist2(loc,all_medians(10,:,t));
+            rmv0=D2<yellow_hand_dists_elbow(1) | D2>yellow_hand_dists_elbow(2);
+
+            %Remove points that are too close or far from the blue arm marker
+            D3=pdist2(loc,all_medians(7,:,t));
+            rmv1=D3<yellow_hand_dists_bluearm(1) | D3>yellow_hand_dists_bluearm(2);
+
+            %Remove points that are too close or far from the red arm marker
+            D4=pdist2(loc,all_medians(8,:,t));
+            rmv2=D4<yellow_hand_dists_redarm(1) | D4>yellow_hand_dists_redarm(2);
+
+            rmv3=D2>dists1(t); %Points are farther from elbow than marker1
+            rmv4=D2>dists2(t); %Points are farther from elbow than marker2
+            rmv5=D2>dists2(t); %Points are farther from elbow than marker3
+
+            %Use above criteria to set points for removal
+            %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
+            %If the marker has been missing for <=4 frames, keep points close
+            %enough to the marker's location in the previous frame
+            if num_gone<=4
+                rmv=~(keep1)| rmv0 | rmv1 | rmv2 |rmv3 |rmv4 |rmv5;
+            else
+                %If the marker has been missing for >4 frames, don't keep any points
+                %based on distance to the marker's location in the previous frame
+                rmv=rmv0 | rmv1 | rmv2;
+            end
+
+            %Actually remove
+            loc(rmv,:)=[];
         end
-        
-        % Keep all the points close enough to the previous marker
-        keep1=D(:,1)<within_clust_dist1;
-        
-        %Remove points that are too close or far from the red elbow marker
-        D2=pdist2(loc,all_medians(10,:,t));
-        rmv0=D2<yellow_hand_dists_elbow(1) | D2>yellow_hand_dists_elbow(2);
-        
-        %Remove points that are too close or far from the blue arm marker
-        D3=pdist2(loc,all_medians(7,:,t));
-        rmv1=D3<yellow_hand_dists_bluearm(1) | D3>yellow_hand_dists_bluearm(2);
-        
-        %Remove points that are too close or far from the red arm marker
-        D4=pdist2(loc,all_medians(8,:,t));
-        rmv2=D4<yellow_hand_dists_redarm(1) | D4>yellow_hand_dists_redarm(2);
-        
-        rmv3=D2>dists1(t); %Points are farther from elbow than marker1
-        rmv4=D2>dists2(t); %Points are farther from elbow than marker2
-        rmv5=D2>dists2(t); %Points are farther from elbow than marker3
-        
-        %Use above criteria to set points for removal
-        %We will always remove points that are too close or far from the arm markers (rmv0, rmv1, rmv2).
-        %If the marker has been missing for <=4 frames, keep points close
-        %enough to the marker's location in the previous frame
-        if num_gone<=4
-            rmv=~(keep1)| rmv0 | rmv1 | rmv2 |rmv3 |rmv4 |rmv5;
-        else
-            %If the marker has been missing for >4 frames, don't keep any points
-            %based on distance to the marker's location in the previous frame
-            rmv=rmv0 | rmv1 | rmv2;
-        end
-        
-        %Actually remove
-        loc(rmv,:)=[];
-        
         
         %2. Cluster and assign
         [ prev_num_clust, prev_meds, medians, medians2  ] = cluster_func2(t, loc, num_clust, prev_num_clust, dist_min, prev_meds, medians, medians2 );
