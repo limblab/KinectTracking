@@ -2009,7 +2009,7 @@ if ~exist('section_completed','var') || section_completed<=7
     
     %Find times when marker 5 has a greater distance to the elbow
     %than marker 3 (which is a problem)
-    idxs=find(dists5>dists3);
+    idxs=find(dists3-dists5<0.01);
     
     %Plot those times
     for i=1:length(idxs)
@@ -2021,7 +2021,7 @@ if ~exist('section_completed','var') || section_completed<=7
         disp(['Correction block 4 of 5, correction ' num2str(i) ' out of ' num2str(length(idxs))])
         
         %Points to Remove
-        str1='Pt 5 is farther from elbow than Pt 3 \n';
+        str1='Pt 5 is farther from elbow than Pt 3 or is too close to Pt 3\n';
         str2='Type in the points to remove \n';
         str3='e.g. 1, or [1,2] - Note that enter removes no points \n';
         rmv=input([str1 str2 str3]);
